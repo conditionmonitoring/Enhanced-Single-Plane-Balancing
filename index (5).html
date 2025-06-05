@@ -1,0 +1,1667 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enhanced Single Plane Balancing Calculator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .input-group {
+            margin-bottom: 1rem;
+        }
+        .input-group label, .radio-group label {
+            display: block;
+            margin-bottom: 0.25rem;
+            font-weight: 500;
+        }
+        .input-group input, .input-group select {
+            width: 100%;
+            padding: 0.5rem;
+            border-radius: 0.375rem;
+            border: 1px solid #D1D5DB; /* gray-300 */
+        }
+        .results-group p {
+            margin-bottom: 0.5rem;
+        }
+        #polarPlotContainer {
+            position: relative; /* For positioning the arrow */
+        }
+        #rotationDirectionArrow {
+            position: absolute;
+            top: -3px; /* Adjust as needed */
+            left: 7%;
+            transform: translateX(-50%);
+            font-size: 1.0rem; /* Arrow size */
+            font-weight: bold;
+            color: #3B82F6; /* blue-500 */
+            padding: 0.25rem 0.5rem;
+            background-color: rgba(255,255,255,0.8);
+            border-radius: 0.25rem;
+            z-index: 10;
+        }
+        #polarPlotCanvas {
+            border: 1px solid #D1D5DB;
+            border-radius: 0.375rem;
+            background-color: #f9fafb; /* gray-50 */
+            max-width: 100%; /* Make canvas responsive */
+            height: auto; /* Maintain aspect ratio */
+        }
+        .vector-legend span.legend-color-box {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            margin-right: 6px;
+            vertical-align: middle;
+            border-radius: 2px;
+        }
+        .vector-legend span.legend-dot { 
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            margin-right: 6px;
+            vertical-align: middle;
+            border-radius: 50%; 
+        }
+        .tab-button {
+            padding: 0.5rem 1rem;
+            margin-right: 0.5rem;
+            margin-bottom: -1px; /* Overlap border */
+            border-radius: 0.375rem 0.375rem 0 0;
+            border: 1px solid #D1D5DB;
+            border-bottom: none;
+            background-color: #E5E7EB; /* gray-200 */
+            cursor: pointer;
+            font-weight: 500;
+        }
+        .tab-button.active {
+            background-color: white;
+            border-bottom: 1px solid white;
+            color: #3B82F6; /* blue-500 */
+        }
+        .tab-content {
+            border: 1px solid #D1D5DB;
+            padding: 1.5rem;
+            border-radius: 0 0.375rem 0.375rem 0.375rem; /* Adjust for tab overlap */
+            background-color: white;
+        }
+        .hidden {
+            display: none;
+        }
+        .footer-button {
+            padding: 0.6rem 1.2rem;
+            border-radius: 0.375rem;
+            font-weight: 500;
+            transition: background-color 0.2s ease-in-out;
+        }
+        .details-section {
+            margin-bottom: 2rem;
+            padding: 1.5rem;
+            background-color: #f0f9ff; /* sky-50 */
+            border-radius: 0.5rem;
+            border: 1px solid #e0f2fe; /* sky-200 */
+        }
+        .suggestion-section {
+             margin-bottom: 2rem;
+             padding: 1.5rem;
+             background-color: #f0f5ff; /* indigo-50 */
+             border-radius: 0.5rem;
+             border: 1px solid #e0e7ff; /* indigo-200 */
+        }
+        #rotorTypeImage {
+            border: 1px solid #e5e7eb; /* gray-200 */
+            border-radius: 0.25rem;
+        }
+
+    </style>
+</head>
+<body class="bg-gray-100 text-gray-800 p-4 md:p-8">
+    <div class="container mx-auto max-w-6xl bg-white p-6 md:p-8 rounded-lg shadow-xl">
+        <header class="mb-8 flex justify-between items-center flex-wrap">
+            <img src="https://www.jklakshmicementsrm.com/jklcall/assets/img/CM.png?" alt="Left Logo" class="h-8 md:h-10" onerror="this.onerror=null; this.src='https://placehold.co/120x40/cccccc/333333?text=Logo+Error';">
+            
+            <div class="text-center flex-grow">
+                <h1 class="text-2xl md:text-3xl font-bold text-blue-600 mb-2">Enhanced Single Plane Balancing</h1>
+                <p class="text-sm md:text-base text-gray-600">Vector Method Calculator</p>
+            </div>
+
+            <img src="https://www.jklakshmicementsrm.com/jklcall/assets/img/CM.png?" alt="Right Logo" class="h-8 md:h-10" onerror="this.onerror=null; this.src='https://placehold.co/120x40/cccccc/333333?text=Logo+Error';">
+
+            <div class="w-full grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
+                <div class="input-group">
+                    <label for="equipmentName" class="font-medium text-gray-700">Equipment Name:</label>
+                    <input type="text" id="equipmentName" placeholder="e.g., Cooling Tower Fan" class="mt-1 focus:ring-blue-500 focus:border-blue-500">
+                </div>
+                <div class="input-group">
+                    <label for="plantName" class="font-medium text-gray-700">Plant:</label>
+                    <input type="text" id="plantName" placeholder="e.g., Steel Melting Shop" class="mt-1 focus:ring-blue-500 focus:border-blue-500">
+                </div>
+                <div class="input-group">
+                    <label for="reportDate" class="font-medium text-gray-700">Date:</label>
+                    <input type="date" id="reportDate" class="mt-1 focus:ring-blue-500 focus:border-blue-500">
+                </div>
+            </div>
+        </header>
+
+        <div class="details-section">
+            <h2 class="text-xl font-semibold mb-4 text-sky-700">Equipment Details</h2>
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-x-6 gap-y-4">
+                <div class="input-group">
+                    <label for="numVanes" class="font-medium text-sky-700">Number of Vanes:</label>
+                    <input type="number" id="numVanes" value="12" class="mt-1 focus:ring-sky-500 focus:border-sky-500">
+                </div>
+                <div>
+                    <label class="font-medium text-sky-700">Direction of Rotation:</label>
+                    <div class="mt-2 flex items-center space-x-2">
+                        <button id="rotDirCCW" class="px-3 py-1.5 text-sm font-medium rounded-md bg-sky-600 text-white">CCW</button>
+                        <button id="rotDirCW" class="px-3 py-1.5 text-sm font-medium rounded-md bg-gray-300 hover:bg-gray-400">CW</button>
+                        <input type="hidden" id="rotationDirection" value="CCW">
+                    </div>
+                </div>
+                <div class="input-group">
+                    <label for="ratedPower" class="font-medium text-sky-700">Rated Power (kW/HP):</label>
+                    <input type="text" id="ratedPower" placeholder="e.g., 50 kW" class="mt-1 focus:ring-sky-500 focus:border-sky-500">
+                </div>
+                <div class="input-group">
+                    <label for="rotorRPM" class="font-medium text-sky-700">Rotor RPM:</label>
+                    <input type="number" id="rotorRPM" step="any" placeholder="e.g., 3000" class="mt-1 focus:ring-sky-500 focus:border-sky-500">
+                </div>
+                 <div class="input-group md:col-span-2">
+                    <label for="measurementLocation" class="font-medium text-sky-700">Measurement Location:</label>
+                    <select id="measurementLocation" class="mt-1 focus:ring-sky-500 focus:border-sky-500">
+                        <option value="IBH">Inboard Horizontal (IBH)</option>
+                        <option value="IBV">Inboard Vertical (IBV)</option>
+                        <option value="IBA">Inboard Axial (IBA)</option>
+                        <option value="OBH">Outboard Horizontal (OBH)</option>
+                        <option value="OBV">Outboard Vertical (OBV)</option>
+                        <option value="OBA">Outboard Axial (OBA)</option>
+                    </select>
+                </div>
+                 <div class="input-group md:col-span-2"> 
+                    <label for="rotorTypeSelect" class="font-medium text-sky-700">Rotor Type:</label>
+                    <div class="mt-1 flex flex-col items-center"> <select id="rotorTypeSelect" class="w-full md:w-auto md:min-w-[180px] focus:ring-sky-500 focus:border-sky-500">
+                            <option value="">Select Type</option>
+                            <option value="Overhang">Overhung</option>
+                            <option value="Center-hung">Center-hung</option>
+                        </select>
+                        <img id="rotorTypeImage" src="" alt="Rotor Type Image" class="hidden mt-2 h-20 md:h-24 w-auto object-contain"> 
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="mb-4">
+             <button id="toggleTrialWeightSectionButton" class="w-full md:w-auto bg-gray-500 hover:bg-gray-600 text-white font-semibold py-2 px-4 rounded-lg transition duration-150 ease-in-out focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-opacity-50 mb-2">
+                Hide Suggestion Details
+            </button>
+            <div id="trialWeightSuggestionContainer" class="suggestion-section">
+                <h2 class="text-xl font-semibold mb-4 text-indigo-700">Trial Weight Suggestion</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="input-group">
+                        <label for="rotorWeight">Rotor Weight (kg):</label>
+                        <input type="number" id="rotorWeight" step="any" placeholder="e.g., 100" class="focus:ring-indigo-500 focus:border-indigo-500">
+                    </div>
+                    <div class="input-group">
+                        <label for="trialRadius">Trial Weight Radius (mm):</label>
+                        <input type="number" id="trialRadius" step="any" placeholder="e.g., 250" class="focus:ring-indigo-500 focus:border-indigo-500">
+                    </div>
+                </div>
+                <button id="suggestTrialWeightButton" class="mt-4 w-full md:w-auto bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded-lg transition duration-150 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-opacity-50">
+                    Suggest Trial Weight
+                </button>
+                <p id="suggestedTrialWeightResult" class="mt-3 text-indigo-800 font-medium"></p>
+            </div>
+        </div>
+
+        <div class="mb-4 flex flex-wrap border-b border-gray-300">
+            <button id="tabStandard" class="tab-button active">Standard Balancing (with Trial Run)</button>
+            <button id="tabKnownIC" class="tab-button">Use Known Influence Coefficient</button>
+            <button id="tabSplitting" class="tab-button">Splitting Weights</button>
+            <button id="tabAbout" class="tab-button">About</button>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div>
+                <div id="contentStandard" class="tab-content">
+                    <h2 class="text-xl font-semibold mb-4 text-blue-700">Standard Balancing Inputs</h2>
+                    <p class="mb-3 text-sm text-gray-600">Data for location: <strong id="currentLocStandard">IBH</strong></p>
+                    
+                    <h3 class="text-lg font-medium mt-4 mb-2 text-gray-700">Original Run (O)</h3>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div class="input-group">
+                            <label for="originalAmp">Amplitude (units):</label>
+                            <input type="number" id="originalAmp" step="any" placeholder="e.g., 5.0" class="focus:ring-blue-500 focus:border-blue-500">
+                        </div>
+                        <div class="input-group">
+                            <label for="originalAngle">Angle (&deg; CCW from Ref):</label>
+                            <input type="number" id="originalAngle" step="any" placeholder="e.g., 45" class="focus:ring-blue-500 focus:border-blue-500">
+                        </div>
+                    </div>
+
+                    <h3 class="text-lg font-medium mt-4 mb-2 text-gray-700">Trial Weight (Wt) - Common for all locations</h3>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div class="input-group">
+                            <label for="trialWeightMass">Mass (units):</label>
+                            <input type="number" id="trialWeightMass" step="any" placeholder="e.g., 10.0" class="focus:ring-blue-500 focus:border-blue-500">
+                        </div>
+                        <div class="input-group">
+                            <label for="trialWeightAngle">Angle (&deg; CCW from Ref):</label>
+                            <input type="number" id="trialWeightAngle" step="any" placeholder="e.g., 0" class="focus:ring-blue-500 focus:border-blue-500">
+                        </div>
+                    </div>
+
+                    <h3 class="text-lg font-medium mt-4 mb-2 text-gray-700">Trial Run (O+T) - For selected location</h3>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div class="input-group">
+                            <label for="trialRunAmp">Amplitude (units):</label>
+                            <input type="number" id="trialRunAmp" step="any" placeholder="e.g., 3.0" class="focus:ring-blue-500 focus:border-blue-500">
+                        </div>
+                        <div class="input-group">
+                            <label for="trialRunAngle">Angle (&deg; CCW from Ref):</label>
+                            <input type="number" id="trialRunAngle" step="any" placeholder="e.g., 120" class="focus:ring-blue-500 focus:border-blue-500">
+                        </div>
+                    </div>
+                    <button id="calculateStandardButton" class="mt-6 w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg transition duration-150 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50">
+                        Calculate Balancing Parameters
+                    </button>
+                </div>
+
+                <div id="contentKnownIC" class="tab-content hidden">
+                    <h2 class="text-xl font-semibold mb-4 text-purple-700">Correction with Known IC</h2>
+                    <p class="mb-3 text-sm text-gray-600">Data for location: <strong id="currentLocKnownIC">IBH</strong></p>
+
+                    <h3 class="text-lg font-medium mt-4 mb-2 text-gray-700">Original Run (O)</h3>
+                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div class="input-group">
+                            <label for="originalAmpKnownIC">Amplitude (units):</label>
+                            <input type="number" id="originalAmpKnownIC" step="any" placeholder="e.g., 5.0" class="focus:ring-purple-500 focus:border-purple-500">
+                        </div>
+                        <div class="input-group">
+                            <label for="originalAngleKnownIC">Angle (&deg; CCW from Ref):</label>
+                            <input type="number" id="originalAngleKnownIC" step="any" placeholder="e.g., 45" class="focus:ring-purple-500 focus:border-purple-500">
+                        </div>
+                    </div>
+                    
+                    <h3 class="text-lg font-medium mt-4 mb-2 text-gray-700">Known Influence Coefficient (IC)</h3>
+                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div class="input-group">
+                            <label for="knownICMag">IC Magnitude (units/mass):</label>
+                            <input type="number" id="knownICMag" step="any" placeholder="e.g., 0.5" class="focus:ring-purple-500 focus:border-purple-500">
+                        </div>
+                        <div class="input-group">
+                            <label for="knownICAngle">IC Angle (&deg; lag from Wt to T_eff):</label>
+                            <input type="number" id="knownICAngle" step="any" placeholder="e.g., 30" class="focus:ring-purple-500 focus:border-purple-500">
+                        </div>
+                    </div>
+                    <button id="calculateKnownICButton" class="mt-6 w-full bg-purple-600 hover:bg-purple-700 text-white font-semibold py-2 px-4 rounded-lg transition duration-150 ease-in-out focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-opacity-50">
+                        Calculate Correction Weight
+                    </button>
+                </div>
+
+                <div id="contentSplitting" class="tab-content hidden">
+                    <h2 class="text-xl font-semibold mb-4 text-teal-700">Splitting Correction Weight</h2>
+                     <p class="mb-3 text-sm text-gray-600">For location: <strong id="currentLocSplitting">IBH</strong></p>
+                    <h3 class="text-lg font-medium mt-4 mb-2 text-gray-700">Original Correction Weight (Wc)</h3>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div class="input-group">
+                            <label for="splitWcMassInput">Mass (units):</label>
+                            <input type="number" id="splitWcMassInput" step="any" placeholder="From calc" class="focus:ring-teal-500 focus:border-teal-500">
+                        </div>
+                        <div class="input-group">
+                            <label for="splitWcAngleInput">Angle (&deg; CCW):</label>
+                            <input type="number" id="splitWcAngleInput" step="any" placeholder="From calc" class="focus:ring-teal-500 focus:border-teal-500">
+                        </div>
+                    </div>
+                     <h3 class="text-lg font-medium mt-4 mb-2 text-gray-700">Splitting Parameters</h3>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div class="input-group">
+                            <label for="splitNumHolesInput">Number of Available Locations:</label>
+                            <input type="number" id="splitNumHolesInput" step="1" placeholder="e.g., 12" class="focus:ring-teal-500 focus:border-teal-500">
+                        </div>
+                        <div class="input-group">
+                            <label for="splitFirstHoleAngleInput">Angle of First Location (&deg; CCW):</label>
+                            <input type="number" id="splitFirstHoleAngleInput" step="any" value="0" placeholder="e.g., 0" class="focus:ring-teal-500 focus:border-teal-500">
+                        </div>
+                    </div>
+                    <button id="calculateSplitWeightsButton" class="mt-6 w-full bg-teal-600 hover:bg-teal-700 text-white font-semibold py-2 px-4 rounded-lg transition duration-150 ease-in-out focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-opacity-50">
+                        Calculate Split Weights
+                    </button>
+                    <div id="splitResultsDisplay" class="results-group mt-4 hidden">
+                        <p><strong>Split Weight 1 (W1):</strong></p>
+                        <p class="ml-4">Mass: <span id="splitWeight1Mass" class="font-mono">---</span></p>
+                        <p class="ml-4">Placement Angle: <span id="splitWeight1Angle" class="font-mono">---</span> &deg;</p>
+                        <p class="mt-2"><strong>Split Weight 2 (W2):</strong></p>
+                        <p class="ml-4">Mass: <span id="splitWeight2Mass" class="font-mono">---</span></p>
+                        <p class="ml-4">Placement Angle: <span id="splitWeight2Angle" class="font-mono">---</span> &deg;</p>
+                    </div>
+                     <p id="splitErrorMessage" class="mt-3 text-red-600 font-medium hidden"></p>
+                </div>
+
+                <div id="contentAbout" class="tab-content hidden">
+                    <h2 class="text-xl font-semibold mb-4 text-gray-700">About This Calculator</h2>
+                    <div class="space-y-3 text-gray-600">
+                        <p>This Enhanced Single Plane Balancing Calculator (Vector Method) is designed to assist maintenance professionals and engineers in performing single-plane balancing of rotating machinery.</p>
+                        <p>Key features include:</p>
+                        <ul class="list-disc list-inside ml-4">
+                            <li>Calculation of correction weights using the standard trial weight method.</li>
+                            <li>Option to use a known Influence Coefficient (IC) for direct correction.</li>
+                            <li>Suggestion for an appropriate trial weight based on rotor parameters.</li>
+                            <li>Calculation for splitting a single correction weight into two weights at available locations.</li>
+                            <li>Interactive polar plot visualization of balancing vectors including High Spot and Heavy Spot.</li>
+                            <li>Data saving, loading, and report printing capabilities.</li>
+                            <li>Word export option for reports.</li>
+                        </ul>
+                        <p><strong>Calculations:</strong>Procedures Single-Plane Balancing</p>
+                        <ul class="list-disc list-inside ml-4">
+                         <li>Record and Plot Original Vibration:<strong>O</strong></li>
+                         <li>Calculate & Install Trial Weight:<strong>TW</strong></li>
+                         <li>Plot Vibration Data with Trial Weight:<strong>O+T</strong></li>
+                         <li>Determine Effective Vector:<strong>T=(O+T)-O=(O+T)+(-O)</strong></li>
+                         <li>Calculate and Install Correction Weight:<strong>CW=(-O/T) x TW(Vectors)</strong></li>
+                         <p>Correction Weight Amplitude:<strong>|CW|=|O| / |T| x |TW|</strong></p>
+                         <P>Correction Weight Angle:<strong>∠CW = ∠(O+180°)–∠T+∠TW</strong></P>
+                         </li>
+                        </ul>
+                        <p><strong>Calculations:</strong>Calculating Influence Coefficients</p>
+                        <P>Influence Coefficients quantify the 1X vibration change (T) divided by the Trial Weight vector (TW)</P>
+                        <ul class="list-disc list-inside ml-4">
+                        <li>Influence Coefficient(H):<strong>H= T/TW = [(O+T)–O]/TW</strong></li>
+                        <p>Amplitude:<strong>|H|=|T|/|TW|</strong></p>
+                        <p>Lag angle:<strong>∠H=∠T–∠TW</strong></p>
+                        <li>Balancing Sensitivity:<strong>1/H</strong></li>
+                        </ul>
+                        <p><strong>Disclaimer:</strong> This calculator provides theoretical calculations based on the inputs provided. Always follow established safety procedures and use calibrated vibration analysis equipment. The results should be verified by experienced personnel.</p>
+                        <p class="text-sm mt-4">Version: 10</p> <p class="text-sm">Developed by Sourav Biswal for illustrative and educational purposes.</p>
+                    </div>
+                </div>
+                
+                <div id="resultsDisplay" class="mt-6 p-6 bg-green-50 rounded-lg border border-green-200 hidden">
+                    <h2 class="text-xl font-semibold mb-4 text-green-700">Calculated Results (for <span id="resultLocation" class="font-bold"></span>)</h2>
+                    <div id="icResults" class="results-group">
+                        <p><strong>Influence Coefficient (IC):</strong></p>
+                        <p class="ml-4">Magnitude(H= T/TW=[(O+T)-O]/TW): <span id="icMagnitude" class="font-mono">---</span></p>
+                        <p class="ml-4">Angle (lag)(∠H=∠T-∠TW):<span id="icAngle" class="font-mono">---</span> &deg;</p>
+                    </div>
+                    <div class="results-group mt-4">
+                        <p><strong>Correction Weight (Wc):</strong></p>
+                        <p class="ml-4">Required Mass: <span id="correctionWeightMass" class="font-mono">---</span></p>
+                        <p class="ml-4">Placement Angle (CCW from Ref): <span id="correctionWeightAngle" class="font-mono">---</span> &deg;</p>
+                    </div>
+                </div>
+                 <div id="errorMessage" class="mt-6 p-4 bg-red-50 text-red-700 rounded-lg border border-red-200 hidden">
+                    Error: <span id="errorText"></span>
+                </div>
+            </div>
+
+            <div class="flex flex-col items-center">
+                <h2 class="text-xl font-semibold mb-1 text-blue-700">Polar Plot (<span id="plotLocationLabel">IBH</span>)</h2>
+                <div id="polarPlotContainer" class="w-full">
+                    <div id="rotationDirectionArrow" class="text-center">CCW ↺</div>
+                    <canvas id="polarPlotCanvas" width="450" height="450"></canvas>
+                </div>
+                <div id="plotLegend" class="mt-4 text-sm space-y-1">
+                    <p><span class="legend-color-box" style="background-color: blue;"></span> Original Run (O)</p>
+                    <p><span class="legend-color-box" style="background-color: red;"></span> Trial Run (O+T)</p>
+                    <p><span class="legend-color-box" style="background-color: green;"></span> Effective Vector of Trial (T_eff)</p>
+                    <p><span class="legend-color-box" style="background-color: orange;"></span> Correction Weight Vector (Wc)</p>
+                    <p><span class="legend-color-box" style="background-color: purple;"></span> Target Response (-O)</p>
+                    <p><span class="legend-color-box" style="background-color: #FFC107;"></span> Split Weight Vector 1 (W_s1)</p> 
+                    <p><span class="legend-color-box" style="background-color: #795548;"></span> Split Weight Vector 2 (W_s2)</p>
+                    <p><span class="legend-dot" style="background-color: red;"></span> HS - High Spot</p> 
+                    <p><span class="legend-dot" style="background-color: darkblue;"></span> hS - Heavy Spot</p> 
+                </div>
+            </div>
+        </div>
+
+        <footer class="mt-12 pt-8 border-t border-gray-300 text-center">
+            <div class="flex flex-wrap justify-center gap-3 md:gap-4 mb-4">
+                <button id="printReportButton" class="footer-button bg-teal-500 hover:bg-teal-600 text-white">
+                    Print Report
+                </button>
+                <button id="exportWordButton" class="footer-button bg-blue-500 hover:bg-blue-600 text-white">
+                    Export for Word
+                </button>
+                <button id="saveDataButton" class="footer-button bg-sky-500 hover:bg-sky-600 text-white">
+                    Save Data
+                </button>
+                <button id="loadDataButton" class="footer-button bg-amber-500 hover:bg-amber-600 text-white">
+                    Load Data
+                </button>
+                <button id="resetFormButton" class="footer-button bg-red-500 hover:bg-red-600 text-white">
+                    Reset All
+                </button>
+            </div>
+            <p class="text-gray-700 text-sm">Copyright © 2025 Sourav Biswal. All Rights Reserved.</p>
+        </footer>
+
+    </div>
+
+    <script>
+        // --- Global Variables & DOM Elements ---
+        const locations = ["IBH", "IBV", "IBA", "OBH", "OBV", "OBA"];
+        let balancingData = {}; 
+        let splitWeightResults = { w1: null, w2: null }; 
+
+        const rotorTypeImageSources = {
+            "Overhung": "https://i.ibb.co/r2gmqVyX/download.png",
+            "Center-hung": "https://i.ibb.co/Q7n6wPnp/download-1.png"
+        };
+
+
+        function initializeData() {
+            balancingData.trialWeight = { mass: null, angle: null };
+            locations.forEach(loc => {
+                balancingData[loc] = {
+                    originalAmp: null, originalAngle: null,
+                    trialRunAmp: null, trialRunAngle: null,
+                    knownICMag: null, knownICAngle: null,
+                    calculatedICMag: null, calculatedICAngle: null, 
+                    correctionMass: null, correctionAngle: null,
+                    lastOriginalForPlot: null, 
+                };
+            });
+            
+            numVanesInput.value = "12";
+            measurementLocationSelect.value = "IBH";
+            ratedPowerInput.value = '';
+            rotorRPMInput.value = ''; 
+            rotorTypeSelect.value = '';
+            rotorTypeImage.classList.add('hidden');
+            rotorTypeImage.src = '';
+
+
+            if (rotationDirectionInput.value === "CW") { 
+                 rotDirCWButton.click(); 
+            } else {
+                 rotDirCCWButton.click(); 
+            }
+            
+            rotorWeightInput.value = '';
+            trialRadiusInput.value = '';
+            suggestedTrialWeightResultP.textContent = '';
+            trialWeightSuggestionContainerDiv.classList.remove('hidden');
+            toggleTrialWeightSectionButton.textContent = "Hide Suggestion Details";
+
+
+            resultsDisplayDiv.classList.add('hidden');
+            errorMessageDiv.classList.add('hidden');
+
+            equipmentNameInput.value = '';
+            plantNameInput.value = '';
+            reportDateInput.value = new Date().toISOString().split('T')[0]; 
+
+            splitWcMassInput.value = '';
+            splitWcAngleInput.value = '';
+            splitNumHolesInput.value = numVanesInput.value || '12'; 
+            splitFirstHoleAngleInput.value = '0';
+            splitResultsDisplayDiv.classList.add('hidden');
+            splitErrorMessageP.classList.add('hidden');
+            splitErrorMessageP.textContent = '';
+            splitWeightResults = { w1: null, w2: null };
+        }
+        
+
+        const numVanesInput = document.getElementById('numVanes');
+        const rotDirCCWButton = document.getElementById('rotDirCCW');
+        const rotDirCWButton = document.getElementById('rotDirCW');
+        const rotationDirectionInput = document.getElementById('rotationDirection');
+        const measurementLocationSelect = document.getElementById('measurementLocation');
+        const rotationDirectionArrowDiv = document.getElementById('rotationDirectionArrow');
+        const ratedPowerInput = document.getElementById('ratedPower'); 
+        const rotorRPMInput = document.getElementById('rotorRPM'); 
+        const rotorTypeSelect = document.getElementById('rotorTypeSelect');
+        const rotorTypeImage = document.getElementById('rotorTypeImage');
+
+        
+        const currentLocStandardSpan = document.getElementById('currentLocStandard');
+        const currentLocKnownICSpan = document.getElementById('currentLocKnownIC');
+        const currentLocSplittingSpan = document.getElementById('currentLocSplitting');
+        const plotLocationLabelSpan = document.getElementById('plotLocationLabel');
+        
+        const tabStandardButton = document.getElementById('tabStandard');
+        const tabKnownICButton = document.getElementById('tabKnownIC');
+        const tabSplittingButton = document.getElementById('tabSplitting');
+        const tabAboutButton = document.getElementById('tabAbout');
+        const contentStandardDiv = document.getElementById('contentStandard');
+        const contentKnownICDiv = document.getElementById('contentKnownIC');
+        const contentSplittingDiv = document.getElementById('contentSplitting');
+        const contentAboutDiv = document.getElementById('contentAbout');
+
+
+        const originalAmpInput = document.getElementById('originalAmp');
+        const originalAngleInput = document.getElementById('originalAngle');
+        const trialWeightMassInput = document.getElementById('trialWeightMass');
+        const trialWeightAngleInput = document.getElementById('trialWeightAngle');
+        const trialRunAmpInput = document.getElementById('trialRunAmp');
+        const trialRunAngleInput = document.getElementById('trialRunAngle');
+        const calculateStandardButton = document.getElementById('calculateStandardButton');
+
+        const originalAmpKnownICInput = document.getElementById('originalAmpKnownIC');
+        const originalAngleKnownICInput = document.getElementById('originalAngleKnownIC');
+        const knownICMagInput = document.getElementById('knownICMag');
+        const knownICAngleInput = document.getElementById('knownICAngle');
+        const calculateKnownICButton = document.getElementById('calculateKnownICButton');
+        
+        const rotorWeightInput = document.getElementById('rotorWeight'); 
+        const trialRadiusInput = document.getElementById('trialRadius'); 
+        const suggestTrialWeightButton = document.getElementById('suggestTrialWeightButton');
+        const suggestedTrialWeightResultP = document.getElementById('suggestedTrialWeightResult');
+        const toggleTrialWeightSectionButton = document.getElementById('toggleTrialWeightSectionButton');
+        const trialWeightSuggestionContainerDiv = document.getElementById('trialWeightSuggestionContainer');
+
+        const resultsDisplayDiv = document.getElementById('resultsDisplay');
+        const resultLocationSpan = document.getElementById('resultLocation');
+        const icResultsDiv = document.getElementById('icResults');
+        const icMagnitudeSpan = document.getElementById('icMagnitude');
+        const icAngleSpan = document.getElementById('icAngle');
+        const correctionWeightMassSpan = document.getElementById('correctionWeightMass');
+        const correctionWeightAngleSpan = document.getElementById('correctionWeightAngle');
+        const errorMessageDiv = document.getElementById('errorMessage');
+        const errorTextSpan = document.getElementById('errorText');
+
+        const splitWcMassInput = document.getElementById('splitWcMassInput');
+        const splitWcAngleInput = document.getElementById('splitWcAngleInput');
+        const splitNumHolesInput = document.getElementById('splitNumHolesInput');
+        const splitFirstHoleAngleInput = document.getElementById('splitFirstHoleAngleInput');
+        const calculateSplitWeightsButton = document.getElementById('calculateSplitWeightsButton');
+        const splitResultsDisplayDiv = document.getElementById('splitResultsDisplay');
+        const splitWeight1MassSpan = document.getElementById('splitWeight1Mass');
+        const splitWeight1AngleSpan = document.getElementById('splitWeight1Angle');
+        const splitWeight2MassSpan = document.getElementById('splitWeight2Mass');
+        const splitWeight2AngleSpan = document.getElementById('splitWeight2Angle');
+        const splitErrorMessageP = document.getElementById('splitErrorMessage');
+
+
+        const canvas = document.getElementById('polarPlotCanvas');
+        const ctx = canvas.getContext('2d');
+
+        const equipmentNameInput = document.getElementById('equipmentName');
+        const plantNameInput = document.getElementById('plantName');
+        const reportDateInput = document.getElementById('reportDate');
+
+        const printReportButton = document.getElementById('printReportButton');
+        const exportWordButton = document.getElementById('exportWordButton'); 
+        const saveDataButton = document.getElementById('saveDataButton');
+        const loadDataButton = document.getElementById('loadDataButton');
+        const resetFormButton = document.getElementById('resetFormButton');
+
+
+        // --- Helper Functions ---
+        function toRadians(degrees) { return degrees * (Math.PI / 180); }
+        function toDegrees(radians) { return radians * (180 / Math.PI); }
+        function normalizeAngle(degrees) {
+            let angle = parseFloat(degrees) % 360;
+            if (angle < 0) angle += 360;
+            return angle;
+        }
+
+        class Vector {
+            constructor(magnitude, angleDeg) {
+                this.magnitude = parseFloat(magnitude);
+                this.angleDeg = normalizeAngle(angleDeg);
+                this.angleRad = toRadians(this.angleDeg);
+                this.x = this.magnitude * Math.cos(this.angleRad);
+                this.y = this.magnitude * Math.sin(this.angleRad);
+            }
+            static fromComponents(x, y) {
+                const magnitude = Math.sqrt(x * x + y * y);
+                const angleRad = Math.atan2(y, x);
+                return new Vector(magnitude, toDegrees(angleRad));
+            }
+        }
+
+        // --- UI Update Functions ---
+        function updateLocationSpecificFields(location) {
+            const data = balancingData[location];
+            originalAmpInput.value = data.originalAmp !== null ? data.originalAmp : '';
+            originalAngleInput.value = data.originalAngle !== null ? data.originalAngle : '';
+            trialRunAmpInput.value = data.trialRunAmp !== null ? data.trialRunAmp : '';
+            trialRunAngleInput.value = data.trialRunAngle !== null ? data.trialRunAngle : '';
+            
+            originalAmpKnownICInput.value = data.originalAmp !== null ? data.originalAmp : ''; 
+            originalAngleKnownICInput.value = data.originalAngle !== null ? data.originalAngle : ''; 
+            knownICMagInput.value = data.knownICMag !== null ? data.knownICMag : (data.calculatedICMag !== null && isFinite(data.calculatedICMag) ? data.calculatedICMag.toFixed(3) : '');
+            knownICAngleInput.value = data.knownICAngle !== null ? data.knownICAngle : (data.calculatedICAngle !== null && isFinite(data.calculatedICAngle) ? data.calculatedICAngle.toFixed(1) : '');
+
+            currentLocStandardSpan.textContent = location;
+            currentLocKnownICSpan.textContent = location;
+            currentLocSplittingSpan.textContent = location;
+            plotLocationLabelSpan.textContent = location;
+
+            prefillSplittingInputs();
+        }
+        
+        function updateGlobalTrialWeightFields() {
+            trialWeightMassInput.value = balancingData.trialWeight.mass !== null ? balancingData.trialWeight.mass : '';
+            trialWeightAngleInput.value = balancingData.trialWeight.angle !== null ? balancingData.trialWeight.angle : '';
+        }
+
+        function displayError(message, target = 'general') {
+            if (target === 'general') {
+                errorTextSpan.textContent = message;
+                errorMessageDiv.classList.remove('hidden');
+                resultsDisplayDiv.classList.add('hidden');
+                splitResultsDisplayDiv.classList.add('hidden');
+            } else if (target === 'splitting') {
+                splitErrorMessageP.textContent = message;
+                splitErrorMessageP.classList.remove('hidden');
+                splitResultsDisplayDiv.classList.add('hidden');
+            }
+        }
+        function clearError(target = 'all') {
+            if (target === 'all' || target === 'general') {
+                errorMessageDiv.classList.add('hidden');
+                errorTextSpan.textContent = '';
+            }
+            if (target === 'all' || target === 'splitting') {
+                splitErrorMessageP.classList.add('hidden');
+                splitErrorMessageP.textContent = '';
+            }
+        }
+        
+        function resetAllFields() {
+            initializeData(); 
+            updateLocationSpecificFields(measurementLocationSelect.value); 
+            updateGlobalTrialWeightFields();
+
+            resultsDisplayDiv.classList.add('hidden');
+            errorMessageDiv.classList.add('hidden');
+            icMagnitudeSpan.textContent = '---';
+            icAngleSpan.textContent = '---';
+            correctionWeightMassSpan.textContent = '---';
+            correctionWeightAngleSpan.textContent = '---';
+            
+            drawPolarPlotBasedOnMode();
+            switchTab(tabStandardButton, contentStandardDiv); 
+            console.log("All fields reset.");
+        }
+
+
+        // --- Event Listeners ---
+        function switchTab(activeTabButton, activeContentDiv) {
+            [tabStandardButton, tabKnownICButton, tabSplittingButton, tabAboutButton].forEach(btn => btn.classList.remove('active'));
+            [contentStandardDiv, contentKnownICDiv, contentSplittingDiv, contentAboutDiv].forEach(content => content.classList.add('hidden'));
+
+            activeTabButton.classList.add('active');
+            activeContentDiv.classList.remove('hidden');
+            clearError(); 
+            if (activeTabButton !== tabSplittingButton) splitResultsDisplayDiv.classList.add('hidden');
+            if (activeTabButton !== tabStandardButton && activeTabButton !== tabKnownICButton) resultsDisplayDiv.classList.add('hidden');
+            
+            drawPolarPlotBasedOnMode();
+        }
+
+        tabStandardButton.addEventListener('click', () => switchTab(tabStandardButton, contentStandardDiv));
+        tabKnownICButton.addEventListener('click', () => {
+            switchTab(tabKnownICButton, contentKnownICDiv);
+            const currentLocation = measurementLocationSelect.value;
+            const data = balancingData[currentLocation];
+            if (data.originalAmp !== null) originalAmpKnownICInput.value = data.originalAmp;
+            if (data.originalAngle !== null) originalAngleKnownICInput.value = data.originalAngle;
+            if (data.calculatedICMag !== null && isFinite(data.calculatedICMag)) knownICMagInput.value = data.calculatedICMag.toFixed(3);
+            else if (data.knownICMag !== null) knownICMagInput.value = data.knownICMag;
+
+            if (data.calculatedICAngle !== null && isFinite(data.calculatedICAngle)) knownICAngleInput.value = data.calculatedICAngle.toFixed(1);
+            else if (data.knownICAngle !== null) knownICAngleInput.value = data.knownICAngle;
+        });
+        tabSplittingButton.addEventListener('click', () => {
+            switchTab(tabSplittingButton, contentSplittingDiv);
+            prefillSplittingInputs();
+        });
+        tabAboutButton.addEventListener('click', () => switchTab(tabAboutButton, contentAboutDiv));
+
+
+        toggleTrialWeightSectionButton.addEventListener('click', () => {
+            trialWeightSuggestionContainerDiv.classList.toggle('hidden');
+            if (trialWeightSuggestionContainerDiv.classList.contains('hidden')) {
+                toggleTrialWeightSectionButton.textContent = "Show Suggestion Details";
+            } else {
+                toggleTrialWeightSectionButton.textContent = "Hide Suggestion Details";
+            }
+        });
+
+        rotDirCCWButton.addEventListener('click', () => {
+            rotationDirectionInput.value = "CCW";
+            rotDirCCWButton.classList.replace('bg-gray-300', 'bg-sky-600');
+            rotDirCCWButton.classList.add('text-white');
+            rotDirCCWButton.classList.remove('hover:bg-gray-400');
+            rotDirCWButton.classList.replace('bg-sky-600', 'bg-gray-300');
+            rotDirCWButton.classList.remove('text-white');
+            rotDirCWButton.classList.add('hover:bg-gray-400');
+            rotationDirectionArrowDiv.innerHTML = "CCW ↺";
+            drawPolarPlotBasedOnMode();
+        });
+        rotDirCWButton.addEventListener('click', () => {
+            rotationDirectionInput.value = "CW";
+            rotDirCWButton.classList.replace('bg-gray-300', 'bg-sky-600');
+            rotDirCWButton.classList.add('text-white');
+            rotDirCWButton.classList.remove('hover:bg-gray-400');
+            rotDirCCWButton.classList.replace('bg-sky-600', 'bg-gray-300');
+            rotDirCCWButton.classList.remove('text-white');
+            rotDirCCWButton.classList.add('hover:bg-gray-400');
+            rotationDirectionArrowDiv.innerHTML = "CW ↻";
+            drawPolarPlotBasedOnMode();
+        });
+
+        rotorTypeSelect.addEventListener('change', (e) => {
+            const selectedType = e.target.value;
+            if (selectedType && rotorTypeImageSources[selectedType]) {
+                rotorTypeImage.src = rotorTypeImageSources[selectedType];
+                rotorTypeImage.alt = selectedType + " Rotor Image";
+                rotorTypeImage.classList.remove('hidden');
+            } else {
+                rotorTypeImage.classList.add('hidden');
+                rotorTypeImage.src = '';
+                rotorTypeImage.alt = 'Rotor Type Image';
+            }
+        });
+
+        measurementLocationSelect.addEventListener('change', (e) => {
+            const newLocation = e.target.value;
+            updateLocationSpecificFields(newLocation);
+            resultsDisplayDiv.classList.add('hidden'); 
+            splitResultsDisplayDiv.classList.add('hidden');
+            clearError();
+            drawPolarPlotBasedOnMode(); 
+        });
+        numVanesInput.addEventListener('change', () => {
+            splitNumHolesInput.value = numVanesInput.value; 
+            drawPolarPlotBasedOnMode();
+        });
+
+
+        function storeCurrentLocationData() {
+            const loc = measurementLocationSelect.value;
+            if(!balancingData[loc]) {
+                balancingData[loc] = { originalAmp: null, originalAngle: null, trialRunAmp: null, trialRunAngle: null, knownICMag: null, knownICAngle: null, calculatedICMag: null, calculatedICAngle: null, correctionMass: null, correctionAngle: null, lastOriginalForPlot: null };
+            }
+            balancingData[loc].originalAmp = parseFloat(originalAmpInput.value) || null;
+            balancingData[loc].originalAngle = parseFloat(originalAngleInput.value) || null;
+            balancingData[loc].trialRunAmp = parseFloat(trialRunAmpInput.value) || null;
+            balancingData[loc].trialRunAngle = parseFloat(trialRunAngleInput.value) || null;
+            
+            if (parseFloat(originalAmpKnownICInput.value)) balancingData[loc].originalAmp = parseFloat(originalAmpKnownICInput.value);
+            if (parseFloat(originalAngleKnownICInput.value)) balancingData[loc].originalAngle = parseFloat(originalAngleKnownICInput.value);
+
+            balancingData[loc].knownICMag = parseFloat(knownICMagInput.value) || null;
+            balancingData[loc].knownICAngle = parseFloat(knownICAngleInput.value) || null;
+        }
+        [originalAmpInput, originalAngleInput, trialRunAmpInput, trialRunAngleInput, knownICMagInput, knownICAngleInput, originalAmpKnownICInput, originalAngleKnownICInput].forEach(input => {
+            input.addEventListener('change', storeCurrentLocationData);
+        });
+        [trialWeightMassInput, trialWeightAngleInput].forEach(input => {
+            input.addEventListener('change', () => {
+                balancingData.trialWeight.mass = parseFloat(trialWeightMassInput.value) || null;
+                balancingData.trialWeight.angle = parseFloat(trialWeightAngleInput.value) || null;
+            });
+        });
+        
+        suggestTrialWeightButton.addEventListener('click', () => {
+            const rotorMassKg = parseFloat(rotorWeightInput.value);
+            const radiusMm = parseFloat(trialRadiusInput.value);
+            const rpm = parseFloat(rotorRPMInput.value); 
+
+            if (isNaN(rotorMassKg) || isNaN(radiusMm) || isNaN(rpm) || rotorMassKg <= 0 || radiusMm <= 0 || rpm <= 0) {
+                suggestedTrialWeightResultP.textContent = "Error: Valid rotor weight, radius (trial), and RPM (equipment) required.";
+                suggestedTrialWeightResultP.classList.add('text-red-600');
+                suggestedTrialWeightResultP.classList.remove('text-indigo-800');
+                return;
+            }
+            suggestedTrialWeightResultP.classList.remove('text-red-600');
+            suggestedTrialWeightResultP.classList.add('text-indigo-800');
+
+            const omega = rpm * 2 * Math.PI / 60; 
+            const radiusM = radiusMm / 1000; 
+            let suggestedMassKg = (0.05 * rotorMassKg * 9.81) / (radiusM * omega * omega); 
+            let suggestedMassGrams = suggestedMassKg * 1000;
+
+            if (isNaN(suggestedMassGrams) || !isFinite(suggestedMassGrams) || suggestedMassGrams <=0) {
+                 suggestedTrialWeightResultP.textContent = `Could not calculate. Check inputs. (Calc: ${suggestedMassGrams.toFixed(2)} g)`;
+                 return;
+            }
+            suggestedTrialWeightResultP.textContent = `Suggested trial weight: ~${suggestedMassGrams.toFixed(1)} grams. Adjust as needed.`;
+        });
+
+        // --- Calculation Logic ---
+        calculateStandardButton.addEventListener('click', () => {
+            clearError();
+            resultsDisplayDiv.classList.add('hidden');
+            const currentLocation = measurementLocationSelect.value;
+            resultLocationSpan.textContent = currentLocation;
+
+            const O_amp = parseFloat(originalAmpInput.value);
+            const O_ang = parseFloat(originalAngleInput.value);
+            const Wt_mass = parseFloat(trialWeightMassInput.value);
+            const Wt_ang = parseFloat(trialWeightAngleInput.value);
+            const OT_amp = parseFloat(trialRunAmpInput.value);
+            const OT_ang = parseFloat(trialRunAngleInput.value);
+
+            if ([O_amp, O_ang, Wt_mass, Wt_ang, OT_amp, OT_ang].some(isNaN)) {
+                displayError("Standard Balancing: All input fields must be valid numbers.");
+                return;
+            }
+            if (Wt_mass <= 0) { displayError("Trial weight mass must be positive."); return; }
+            if (O_amp < 0 || OT_amp < 0) { displayError("Amplitudes cannot be negative."); return; }
+
+            const O_vec = new Vector(O_amp, O_ang);
+            const OT_vec = new Vector(OT_amp, OT_ang);
+
+            const T_eff_x = OT_vec.x - O_vec.x;
+            const T_eff_y = OT_vec.y - O_vec.y;
+            const T_eff_vec = Vector.fromComponents(T_eff_x, T_eff_y);
+            
+            const icMag = (Wt_mass > 1e-9) ? (T_eff_vec.magnitude / Wt_mass) : Infinity;
+            const icAng = normalizeAngle(T_eff_vec.angleDeg - Wt_ang);
+
+            balancingData[currentLocation].calculatedICMag = icMag;
+            balancingData[currentLocation].calculatedICAngle = icAng;
+            balancingData[currentLocation].lastOriginalForPlot = O_vec; 
+            balancingData[currentLocation].originalAmp = O_amp; 
+            balancingData[currentLocation].originalAngle = O_ang;
+            balancingData[currentLocation].trialRunAmp = OT_amp; 
+            balancingData[currentLocation].trialRunAngle = OT_ang;
+
+
+            icMagnitudeSpan.textContent = (isFinite(icMag)) ? icMag.toFixed(3) : "N/A (Wt mass zero)";
+            icAngleSpan.textContent = (isFinite(icMag)) ? icAng.toFixed(1) : "N/A";
+            icResultsDiv.classList.remove('hidden');
+
+            let corrMass, corrAngle;
+            if (!isFinite(icMag) || icMag < 1e-9) { 
+                corrMass = "N/A";
+                corrAngle = "N/A";
+                 balancingData[currentLocation].correctionMass = null;
+                 balancingData[currentLocation].correctionAngle = null;
+                if (O_amp > 1e-9) displayError("IC magnitude is near zero or invalid. Cannot calculate correction weight accurately.");
+            } else {
+                corrMass = O_vec.magnitude / icMag;
+                corrAngle = normalizeAngle(normalizeAngle(O_vec.angleDeg + 180) - icAng);
+                balancingData[currentLocation].correctionMass = corrMass;
+                balancingData[currentLocation].correctionAngle = corrAngle;
+            }
+
+            correctionWeightMassSpan.textContent = (typeof corrMass === 'number') ? corrMass.toFixed(3) : corrMass;
+            correctionWeightAngleSpan.textContent = (typeof corrAngle === 'number') ? corrAngle.toFixed(1) : corrAngle;
+            
+            resultsDisplayDiv.classList.remove('hidden');
+            prefillSplittingInputs();
+            drawPolarPlot(O_vec, OT_vec, T_eff_vec, 
+                          (typeof corrAngle === 'number' && typeof corrMass === 'number') ? new Vector(corrMass, corrAngle) : null, 
+                          null, null, null);
+        });
+
+        calculateKnownICButton.addEventListener('click', () => {
+            clearError();
+            resultsDisplayDiv.classList.add('hidden');
+            const currentLocation = measurementLocationSelect.value;
+            resultLocationSpan.textContent = currentLocation;
+
+            const O_amp = parseFloat(originalAmpKnownICInput.value);
+            const O_ang = parseFloat(originalAngleKnownICInput.value);
+            const known_IC_mag = parseFloat(knownICMagInput.value);
+            const known_IC_ang = parseFloat(knownICAngleInput.value); 
+
+            if ([O_amp, O_ang, known_IC_mag, known_IC_ang].some(isNaN)) {
+                displayError("Known IC: Original Run and Known IC fields must be valid numbers.");
+                return;
+            }
+            if (known_IC_mag <= 1e-9) { displayError("Known IC magnitude must be positive and non-zero."); return; }
+            if (O_amp < 0) { displayError("Original amplitude cannot be negative."); return; }
+
+            const O_vec = new Vector(O_amp, O_ang);
+            balancingData[currentLocation].lastOriginalForPlot = O_vec;
+            balancingData[currentLocation].originalAmp = O_amp; 
+            balancingData[currentLocation].originalAngle = O_ang;
+            balancingData[currentLocation].trialRunAmp = null; 
+            balancingData[currentLocation].trialRunAngle = null;
+            balancingData[currentLocation].calculatedICMag = null; 
+            balancingData[currentLocation].calculatedICAngle = null; 
+
+
+            const corrMass = O_vec.magnitude / known_IC_mag;
+            const corrAngle = normalizeAngle(normalizeAngle(O_vec.angleDeg + 180) - known_IC_ang);
+
+            balancingData[currentLocation].correctionMass = corrMass;
+            balancingData[currentLocation].correctionAngle = corrAngle;
+            balancingData[currentLocation].knownICMag = known_IC_mag; 
+            balancingData[currentLocation].knownICAngle = known_IC_ang;
+
+            icResultsDiv.classList.add('hidden'); 
+            correctionWeightMassSpan.textContent = corrMass.toFixed(3);
+            correctionWeightAngleSpan.textContent = corrAngle.toFixed(1);
+
+            resultsDisplayDiv.classList.remove('hidden');
+            prefillSplittingInputs();
+            const minus_O_vec = new Vector(O_vec.magnitude, normalizeAngle(O_vec.angleDeg + 180));
+            drawPolarPlot(O_vec, null, null, new Vector(corrMass, corrAngle), minus_O_vec, null, null);
+        });
+
+        function prefillSplittingInputs() {
+            const currentLocation = measurementLocationSelect.value;
+            const data = balancingData[currentLocation];
+            if (data && data.correctionMass !== null && data.correctionAngle !== null && isFinite(data.correctionMass) && isFinite(data.correctionAngle) ) {
+                splitWcMassInput.value = data.correctionMass.toFixed(3);
+                splitWcAngleInput.value = data.correctionAngle.toFixed(1);
+            }
+            splitNumHolesInput.value = numVanesInput.value || '12'; 
+        }
+        
+        calculateSplitWeightsButton.addEventListener('click', () => {
+            clearError('splitting');
+            splitResultsDisplayDiv.classList.add('hidden');
+            splitWeightResults = { w1: null, w2: null }; 
+
+
+            const wcMass = parseFloat(splitWcMassInput.value);
+            const wcAngleDeg = parseFloat(splitWcAngleInput.value);
+            const numHoles = parseInt(splitNumHolesInput.value);
+            const firstHoleAngleDeg = parseFloat(splitFirstHoleAngleInput.value);
+
+            if (isNaN(wcMass) || isNaN(wcAngleDeg) || isNaN(numHoles) || isNaN(firstHoleAngleDeg)) {
+                displayError("Splitting: All input fields for splitting must be valid numbers.", 'splitting');
+                return;
+            }
+            if (wcMass <= 0) { displayError("Correction weight mass to split must be positive.", 'splitting'); return; }
+            if (numHoles <= 1) { displayError("Number of available locations must be at least 2.", 'splitting'); return; }
+
+            const wcAngleRad = toRadians(wcAngleDeg);
+            const angleIncrementDeg = 360 / numHoles;
+
+            let holeAnglesDeg = [];
+            for (let i = 0; i < numHoles; i++) {
+                holeAnglesDeg.push(normalizeAngle(firstHoleAngleDeg + i * angleIncrementDeg));
+            }
+           
+            let thetaA_deg = -1, thetaB_deg = -1;
+            let mass1 = 0, mass2 = 0;
+
+            const sortedHoleAnglesDeg = [...holeAnglesDeg].sort((a,b) => normalizeAngle(a - firstHoleAngleDeg) - normalizeAngle(b-firstHoleAngleDeg) );
+
+            for (let i = 0; i < numHoles; i++) {
+                const currentHole = sortedHoleAnglesDeg[i];
+                const nextHole = sortedHoleAnglesDeg[(i + 1) % numHoles]; 
+                
+                let wc_is_between;
+                if (currentHole <= nextHole) { 
+                    wc_is_between = (wcAngleDeg >= currentHole && wcAngleDeg <= nextHole); 
+                } else { 
+                    wc_is_between = (wcAngleDeg >= currentHole || wcAngleDeg <= nextHole);
+                }
+
+                if (wc_is_between) {
+                    thetaA_deg = currentHole;
+                    thetaB_deg = nextHole;
+                    break;
+                }
+            }
+            
+            if (thetaA_deg === -1) {
+                 const exactMatchIndex = sortedHoleAnglesDeg.findIndex(h => Math.abs(normalizeAngle(h - wcAngleDeg)) < 0.01 || Math.abs(normalizeAngle(h - wcAngleDeg) - 360) < 0.01);
+                 if (exactMatchIndex !== -1) {
+                     thetaA_deg = sortedHoleAnglesDeg[exactMatchIndex];
+                     thetaB_deg = sortedHoleAnglesDeg[(exactMatchIndex + 1) % numHoles]; 
+                 } else { 
+                     thetaA_deg = sortedHoleAnglesDeg[numHoles - 1];
+                     thetaB_deg = sortedHoleAnglesDeg[0];
+                 }
+            }
+            
+            if (Math.abs(normalizeAngle(wcAngleDeg - thetaA_deg)) < 0.01) {
+                mass1 = wcMass; mass2 = 0;
+            } else if (Math.abs(normalizeAngle(wcAngleDeg - thetaB_deg)) < 0.01) {
+                mass1 = 0; mass2 = wcMass;
+            } else if (Math.abs(normalizeAngle(thetaA_deg - thetaB_deg)) < 0.01 && numHoles > 1) {
+                 displayError("Cannot split, bracketing holes are effectively the same and Wc is not on them.", 'splitting');
+                 return;
+            }
+            else {
+                const beta = toRadians(normalizeAngle(thetaB_deg - wcAngleDeg)); 
+                const gamma = toRadians(normalizeAngle(wcAngleDeg - thetaA_deg));
+                const alpha = toRadians(normalizeAngle(thetaB_deg - thetaA_deg)); 
+
+                if (Math.abs(Math.sin(alpha)) < 1e-9) { 
+                    displayError("Cannot split, locations are co-linear (0 or 180 deg apart) and Wc is not aligned with one.", 'splitting');
+                    return;
+                }
+                mass1 = wcMass * Math.sin(beta) / Math.sin(alpha);
+                mass2 = wcMass * Math.sin(gamma) / Math.sin(alpha);
+            }
+
+            if (mass1 < -1e-9 || mass2 < -1e-9) { 
+                 displayError(`Calculated split masses are negative (W1:${mass1.toFixed(3)}, W2:${mass2.toFixed(3)}). Wc (${wcAngleDeg.toFixed(1)}°) may not be between selected holes (${thetaA_deg.toFixed(1)}°, ${thetaB_deg.toFixed(1)}°). Ensure Wc is between them.`, 'splitting');
+                 return;
+            }
+            if (Math.abs(mass1) < 1e-9) mass1 = 0;
+            if (Math.abs(mass2) < 1e-9) mass2 = 0;
+
+
+            splitWeight1MassSpan.textContent = mass1.toFixed(3);
+            splitWeight1AngleSpan.textContent = thetaA_deg.toFixed(1);
+            splitWeight2MassSpan.textContent = mass2.toFixed(3);
+            splitWeight2AngleSpan.textContent = thetaB_deg.toFixed(1);
+            splitResultsDisplayDiv.classList.remove('hidden');
+
+            splitWeightResults.w1 = new Vector(mass1, thetaA_deg);
+            splitWeightResults.w2 = new Vector(mass2, thetaB_deg);
+            drawPolarPlotBasedOnMode(); 
+        });
+
+
+        // --- Polar Plotting ---
+        function drawPolarPlotBasedOnMode() {
+            const currentModeTab = document.querySelector('.tab-button.active').id;
+            const currentLocation = measurementLocationSelect.value;
+            const data = balancingData[currentLocation];
+
+            let O_vec = null, OT_vec = null, T_eff_vec = null, Wc_vec_plot = null, Minus_O_vec_plot = null;
+            let Ws1_vec = null, Ws2_vec = null;
+
+            if (data.originalAmp !== null && data.originalAngle !== null) {
+                O_vec = new Vector(data.originalAmp, data.originalAngle);
+            } else if (data.lastOriginalForPlot) { 
+                 O_vec = data.lastOriginalForPlot;
+            }
+             if (O_vec && !(O_vec instanceof Vector) && O_vec.magnitude !== undefined) { 
+                O_vec = new Vector(O_vec.magnitude, O_vec.angleDeg);
+            }
+
+
+            if (currentModeTab === 'tabStandard') {
+                if (O_vec && data.trialRunAmp !== null && data.trialRunAngle !== null) {
+                     OT_vec = new Vector(data.trialRunAmp, data.trialRunAngle);
+                     T_eff_vec = Vector.fromComponents(OT_vec.x - O_vec.x, OT_vec.y - O_vec.y);
+                }
+                if (data.correctionMass !== null && data.correctionAngle !== null && isFinite(data.correctionMass)) {
+                    Wc_vec_plot = new Vector(data.correctionMass, data.correctionAngle); 
+                }
+            } else if (currentModeTab === 'tabKnownIC') {
+                 if (O_vec && data.correctionMass !== null && data.correctionAngle !== null && isFinite(data.correctionMass)) {
+                    Wc_vec_plot = new Vector(data.correctionMass, data.correctionAngle);
+                    Minus_O_vec_plot = new Vector(O_vec.magnitude, normalizeAngle(O_vec.angleDeg + 180));
+                 }
+            } else if (currentModeTab === 'tabSplitting') {
+                const wcMassToSplit = parseFloat(splitWcMassInput.value);
+                const wcAngleToSplit = parseFloat(splitWcAngleInput.value);
+
+                if (!isNaN(wcMassToSplit) && !isNaN(wcAngleToSplit) && wcMassToSplit > 0) {
+                     Wc_vec_plot = new Vector(wcMassToSplit, wcAngleToSplit);
+                } else if (data.correctionMass !== null && data.correctionAngle !== null && isFinite(data.correctionMass)) {
+                     Wc_vec_plot = new Vector(data.correctionMass, data.correctionAngle); 
+                }
+
+                if (splitWeightResults.w1 && splitWeightResults.w1.magnitude > 1e-9) Ws1_vec = splitWeightResults.w1;
+                if (splitWeightResults.w2 && splitWeightResults.w2.magnitude > 1e-9) Ws2_vec = splitWeightResults.w2;
+            }
+            
+            drawPolarPlot(O_vec, OT_vec, T_eff_vec, Wc_vec_plot, Minus_O_vec_plot, Ws1_vec, Ws2_vec);
+        }
+
+        // UPDATED drawPolarPlot function
+        function drawPolarPlot(O_vec, OT_vec, T_eff_vec, Wc_vec_plot, Minus_O_vec_plot, Ws1_vec, Ws2_vec) {
+            const numVanesPlot = parseInt(numVanesInput.value) || 12;
+            if (numVanesPlot <= 0) {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                ctx.fillStyle = "#f9fafb"; ctx.fillRect(0, 0, canvas.width, canvas.height);
+                ctx.fillStyle = "red"; ctx.font = "16px Arial"; ctx.textAlign = "center";
+                ctx.fillText("Number of vanes must be positive.", canvas.width / 2, canvas.height / 2);
+                return;
+            }
+            const rotationDir = rotationDirectionInput.value; 
+
+            const canvasWidth = canvas.clientWidth;
+            const canvasHeight = canvas.clientHeight;
+            canvas.width = canvasWidth; canvas.height = canvasHeight;
+
+            const centerX = canvas.width / 2;
+            const centerY = canvas.height / 2;
+            const plotRadius = Math.min(centerX, centerY) * 0.80;
+
+            // --- SCALING LOGIC UPDATED ---
+            let scaleDeterminingAmplitude = 10.0; 
+            const vibrationAmps = [];
+            if (O_vec && O_vec.magnitude > 1e-9) vibrationAmps.push(O_vec.magnitude);
+            if (OT_vec && OT_vec.magnitude > 1e-9) vibrationAmps.push(OT_vec.magnitude);
+            if (T_eff_vec && T_eff_vec.magnitude > 1e-9) vibrationAmps.push(T_eff_vec.magnitude);
+
+            if (vibrationAmps.length > 0) {
+                scaleDeterminingAmplitude = Math.max(...vibrationAmps, scaleDeterminingAmplitude); 
+            } else {
+                const otherNotableAmps = [];
+                if (Wc_vec_plot && Wc_vec_plot.magnitude > 1e-9) otherNotableAmps.push(Wc_vec_plot.magnitude);
+                if (Ws1_vec && Ws1_vec.magnitude > 1e-9) otherNotableAmps.push(Ws1_vec.magnitude);
+                if (Ws2_vec && Ws2_vec.magnitude > 1e-9) otherNotableAmps.push(Ws2_vec.magnitude);
+                if (Minus_O_vec_plot && Minus_O_vec_plot.magnitude > 1e-9) otherNotableAmps.push(Minus_O_vec_plot.magnitude);
+                if (otherNotableAmps.length > 0) {
+                    scaleDeterminingAmplitude = Math.max(...otherNotableAmps, scaleDeterminingAmplitude);
+                }
+            }
+            const scale = plotRadius / scaleDeterminingAmplitude;
+            // --- END SCALING LOGIC UPDATE ---
+
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = "#f9fafb"; ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            const numCircles = 4;
+            ctx.strokeStyle = "#e0e0e0"; ctx.fillStyle = "#555";
+            ctx.font = `${Math.max(10, canvasWidth / 45)}px Arial`;
+            ctx.textAlign = "center"; ctx.textBaseline = "middle";
+            for (let i = 1; i <= numCircles; i++) {
+                const r = (plotRadius / numCircles) * i;
+                ctx.beginPath(); ctx.arc(centerX, centerY, r, 0, 2 * Math.PI); ctx.stroke();
+                const amplitudeValue = (scaleDeterminingAmplitude / numCircles) * i; 
+                const labelAngleRad = toRadians(-45); 
+                const labelX = centerX + r * Math.cos(labelAngleRad) + (canvasWidth > 300 ? 5 : 2);
+                const labelY = centerY - r * Math.sin(labelAngleRad) + (canvasWidth > 300 ? 5 : 2);
+                ctx.fillText(amplitudeValue.toFixed(scaleDeterminingAmplitude > 10 ? 1 : 2), labelX, labelY);
+            }
+
+            ctx.strokeStyle = "#cccccc"; const angleStep = 360 / numVanesPlot;
+            for (let i = 0; i < numVanesPlot; i++) {
+                const actualAngleRad = toRadians(i * angleStep); 
+                const xEnd = centerX + plotRadius * Math.cos(actualAngleRad);
+                const yEnd = centerY - plotRadius * Math.sin(actualAngleRad);
+                ctx.beginPath(); ctx.moveTo(centerX, centerY); ctx.lineTo(xEnd, yEnd); ctx.stroke();
+                let vaneLabel;
+                if (rotationDir === "CW") { vaneLabel = i; } 
+                else { vaneLabel = (i === 0) ? 0 : (numVanesPlot - i); }
+                const labelRadiusOuter = plotRadius + (canvasWidth > 300 ? 12 : 8);
+                const lx = centerX + labelRadiusOuter * Math.cos(actualAngleRad);
+                const ly = centerY - labelRadiusOuter * Math.sin(actualAngleRad);
+                ctx.fillStyle = "#333"; ctx.font = `${Math.max(8, canvasWidth / 50)}px Arial`;
+                ctx.fillText(vaneLabel, lx, ly);
+            }
+
+            const anglesToLabel = [0, 90, 180, 270];
+            anglesToLabel.forEach(angle => {
+                const rad = toRadians(angle); let isVaneAngle = false;
+                for (let k = 0; k < numVanesPlot; ++k) { if (Math.abs(normalizeAngle(k * angleStep) - normalizeAngle(angle)) < 0.1) { isVaneAngle = true; break; } }
+                if (!isVaneAngle || numVanesPlot > 12 || (numVanesPlot === 12 && angle % 90 !== 0) || (numVanesPlot === 8 && angle % 90 !== 0) || numVanesPlot <= 4) {
+                    const R_angle_label = plotRadius + (canvasWidth > 300 ? 25 : 18);
+                    const x = centerX + R_angle_label * Math.cos(rad); const y = centerY - R_angle_label * Math.sin(rad);
+                    ctx.fillStyle = "#111"; ctx.font = `bold ${Math.max(10, canvasWidth / 45)}px Arial`;
+                    ctx.fillText(angle + "\u00B0", x, y);
+                }
+            });
+
+            const tachoRadius = plotRadius + (canvasWidth > 300 ? 5 : 3);
+            const tachoOuterRadius = tachoRadius + (canvasWidth > 300 ? 8 : 5);
+            ctx.beginPath(); ctx.moveTo(centerX + tachoRadius, centerY); ctx.lineTo(centerX + tachoOuterRadius, centerY);
+            ctx.strokeStyle = "#059669"; ctx.lineWidth = 2; ctx.stroke();
+            ctx.beginPath(); ctx.arc(centerX + tachoOuterRadius + (canvasWidth > 300 ? 3 : 2), centerY, (canvasWidth > 300 ? 3 : 2), 0, 2 * Math.PI);
+            ctx.fillStyle = "#059669"; ctx.fill();
+
+            let o_vec_canvas_endX = null; let o_vec_canvas_endY = null;
+            if (O_vec && O_vec.magnitude > 1e-9) {
+                let o_plotAngleRad = O_vec.angleRad;
+                if (rotationDir === "CCW" && O_vec.angleDeg !== 0) { o_plotAngleRad = toRadians(normalizeAngle(360 - O_vec.angleDeg)); }
+                o_vec_canvas_endX = centerX + O_vec.magnitude * Math.cos(o_plotAngleRad) * scale;
+                o_vec_canvas_endY = centerY - O_vec.magnitude * Math.sin(o_plotAngleRad) * scale;
+                drawSingleVector(O_vec, "blue", "O", centerX, centerY, scale, canvasWidth, undefined, undefined);
+            }
+            if (OT_vec && OT_vec.magnitude > 1e-9) { drawSingleVector(OT_vec, "red", "O+T", centerX, centerY, scale, canvasWidth, undefined, undefined); }
+            if (T_eff_vec && T_eff_vec.magnitude > 1e-9) {
+                 if (o_vec_canvas_endX !== null && o_vec_canvas_endY !== null) {
+                    drawSingleVector(T_eff_vec, "green", "T_eff", centerX, centerY, scale, canvasWidth, o_vec_canvas_endX, o_vec_canvas_endY);
+                } else { 
+                    drawSingleVector(T_eff_vec, "green", "T_eff", centerX, centerY, scale, canvasWidth, undefined, undefined);
+                }
+            }
+            if (Wc_vec_plot && Wc_vec_plot.magnitude > 1e-9) { drawSingleVector(Wc_vec_plot, "orange", "Wc", centerX, centerY, scale, canvasWidth, undefined, undefined); }
+            if (Minus_O_vec_plot && Minus_O_vec_plot.magnitude > 1e-9) { drawSingleVector(Minus_O_vec_plot, "purple", "-O", centerX, centerY, scale, canvasWidth, undefined, undefined); }
+            if (Ws1_vec && Ws1_vec.magnitude > 1e-9) { drawSingleVector(Ws1_vec, "#FFC107", "W_s1", centerX, centerY, scale, canvasWidth, undefined, undefined); }
+            if (Ws2_vec && Ws2_vec.magnitude > 1e-9) { drawSingleVector(Ws2_vec, "#795548", "W_s2", centerX, centerY, scale, canvasWidth, undefined, undefined); }
+
+            // --- HS and hS MARKERS UPDATED ---
+            if (O_vec && O_vec.magnitude > 1e-9) {
+                const highSpotAngleDeg_CCW = O_vec.angleDeg; 
+                let icAngleForSpots = null;
+                const currentLocation = measurementLocationSelect.value;
+                const currentLocationData = balancingData[currentLocation];
+                if (currentLocationData) {
+                    if (T_eff_vec && currentLocationData.calculatedICAngle !== null && isFinite(currentLocationData.calculatedICAngle)) { icAngleForSpots = currentLocationData.calculatedICAngle; } 
+                    else if (Minus_O_vec_plot && currentLocationData.knownICAngle !== null && isFinite(currentLocationData.knownICAngle)) { icAngleForSpots = currentLocationData.knownICAngle; } 
+                    else if (document.getElementById('tabKnownIC').classList.contains('active') && currentLocationData.knownICAngle !== null && isFinite(currentLocationData.knownICAngle)) { icAngleForSpots = currentLocationData.knownICAngle; } 
+                    else if (document.getElementById('tabStandard').classList.contains('active') && currentLocationData.calculatedICAngle !== null && isFinite(currentLocationData.calculatedICAngle)) { icAngleForSpots = currentLocationData.calculatedICAngle; } 
+                    else if (currentLocationData.calculatedICAngle !== null && isFinite(currentLocationData.calculatedICAngle)) { icAngleForSpots = currentLocationData.calculatedICAngle; } 
+                    else if (currentLocationData.knownICAngle !== null && isFinite(currentLocationData.knownICAngle)) { icAngleForSpots = currentLocationData.knownICAngle; }
+                }
+                
+                let hsDisplayAngleDeg = highSpotAngleDeg_CCW;
+                if (rotationDir === "CCW" && highSpotAngleDeg_CCW !== 0) { hsDisplayAngleDeg = normalizeAngle(360 - highSpotAngleDeg_CCW); }
+                const hsPlotAngleRad_display = toRadians(hsDisplayAngleDeg);
+                
+                const markerOuterRadius = plotRadius * 1.05 + (canvasWidth > 300 ? 10 : 5); 
+                const markerDotRadius = Math.max(3, canvasWidth / 100);
+                const labelOffset = markerDotRadius + 3; 
+
+                const hsX = centerX + markerOuterRadius * Math.cos(hsPlotAngleRad_display);
+                const hsY = centerY - markerOuterRadius * Math.sin(hsPlotAngleRad_display); 
+                
+                ctx.beginPath(); ctx.arc(hsX, hsY, markerDotRadius, 0, 2 * Math.PI); 
+                ctx.fillStyle = "red"; // HS color
+                ctx.fill();
+                ctx.font = `bold ${Math.max(9, canvasWidth / 45)}px Arial`;
+                ctx.fillStyle = "red"; // HS text color
+                ctx.textAlign = (Math.cos(hsPlotAngleRad_display) < -0.1) ? "right" : "left";
+                ctx.textBaseline = "middle";
+                ctx.fillText("HS", hsX + (Math.cos(hsPlotAngleRad_display) * labelOffset), hsY - (Math.sin(hsPlotAngleRad_display) * labelOffset) +1 );
+
+
+                if (icAngleForSpots !== null) {
+                    const heavySpotAngleDeg_CCW = normalizeAngle(highSpotAngleDeg_CCW - icAngleForSpots); 
+                    let heavySDisplayAngleDeg = heavySpotAngleDeg_CCW;
+                    if (rotationDir === "CCW" && heavySpotAngleDeg_CCW !== 0) { heavySDisplayAngleDeg = normalizeAngle(360 - heavySpotAngleDeg_CCW); }
+                    const heavySpotPlotAngleRad_display = toRadians(heavySDisplayAngleDeg); 
+                    
+                    const heavySX = centerX + markerOuterRadius * Math.cos(heavySpotPlotAngleRad_display);
+                    const heavySY = centerY - markerOuterRadius * Math.sin(heavySpotPlotAngleRad_display);
+                    ctx.beginPath(); ctx.arc(heavySX, heavySY, markerDotRadius, 0, 2 * Math.PI); 
+                    ctx.fillStyle = "darkblue"; // hS color
+                    ctx.fill();
+                    ctx.font = `bold ${Math.max(9, canvasWidth / 45)}px Arial`; 
+                    ctx.fillStyle = "darkblue"; // hS text color
+                    ctx.textAlign = (Math.cos(heavySpotPlotAngleRad_display) < -0.1) ? "right" : "left";
+                    ctx.textBaseline = "middle";
+                    ctx.fillText("hS", heavySX + (Math.cos(heavySpotPlotAngleRad_display) * labelOffset), heavySY - (Math.sin(heavySpotPlotAngleRad_display) * labelOffset) + 1); 
+                }
+            }
+        }
+
+        // UPDATED drawSingleVector function
+        function drawSingleVector(vector, color, label, plotCenterX, plotCenterY, scaleFactor, canvasWidth, customStartX, customStartY) {
+            if (!vector || vector.magnitude < 1e-9) return;
+
+            let plotAngleRad = vector.angleRad; 
+            const currentRotationDir = rotationDirectionInput.value;
+
+            if (currentRotationDir === "CCW") {
+                if (vector.angleDeg !== 0) { 
+                    plotAngleRad = toRadians(normalizeAngle(360 - vector.angleDeg));
+                } else {
+                    plotAngleRad = 0; 
+                }
+            }
+
+            const startX = (customStartX !== undefined && customStartX !== null) ? customStartX : plotCenterX;
+            const startY = (customStartY !== undefined && customStartY !== null) ? customStartY : plotCenterY;
+
+            const vectorPlotXComponent = vector.magnitude * Math.cos(plotAngleRad) * scaleFactor;
+            const vectorPlotYComponent = vector.magnitude * Math.sin(plotAngleRad) * scaleFactor;
+
+            const endX = startX + vectorPlotXComponent;
+            const endY = startY - vectorPlotYComponent; 
+
+            ctx.beginPath();
+            ctx.moveTo(startX, startY);
+            ctx.lineTo(endX, endY);
+            ctx.strokeStyle = color;
+            ctx.lineWidth = Math.max(2, canvasWidth / 200);
+            ctx.stroke();
+
+            const headLength = Math.max(6, canvasWidth / 50);
+            const arrowAngle = Math.atan2(endY - startY, endX - startX);
+
+            ctx.fillStyle = color;
+            ctx.beginPath();
+            ctx.moveTo(endX, endY);
+            ctx.lineTo(endX - headLength * Math.cos(arrowAngle - Math.PI / 6), endY - headLength * Math.sin(arrowAngle - Math.PI / 6));
+            ctx.lineTo(endX - headLength * Math.cos(arrowAngle + Math.PI / 6), endY - headLength * Math.sin(arrowAngle + Math.PI / 6));
+            ctx.closePath();
+            ctx.fill();
+
+            ctx.font = `bold ${Math.max(9, canvasWidth / 45)}px Arial`;
+            ctx.fillStyle = color; 
+            ctx.textAlign = "left";
+            ctx.textBaseline = "bottom";
+            let labelText = `${label}: ${vector.magnitude.toFixed(vector.magnitude > 10 ? 1 : 2)} @ ${vector.angleDeg.toFixed(0)}\u00B0`;
+            
+            let textX = endX + 5; 
+            let textY = endY - 5;
+            const measuredText = ctx.measureText(labelText);
+            const textWidth = measuredText.width;
+ 
+            if (vectorPlotXComponent * scaleFactor < 0) { 
+                textX = endX - textWidth - 5;
+            } else { 
+                textX = endX + 5;
+            }
+
+            if (Math.abs(vectorPlotYComponent * scaleFactor) < headLength * 2 && Math.abs(vectorPlotXComponent * scaleFactor) > textWidth /2 ) { 
+                 textY = endY + (vectorPlotYComponent * scaleFactor > 0 ? 15 : -5); 
+            } else if (vectorPlotYComponent * scaleFactor > 0) { 
+                textY = endY + 15; 
+            } else { 
+                textY = endY - 5; 
+            }
+            ctx.fillText(labelText, textX, textY);
+        }
+        
+        // --- Footer Button Actions ---
+        printReportButton.addEventListener('click', () => {
+            const suggestionContainerHidden = trialWeightSuggestionContainerDiv.classList.contains('hidden');
+            const toggleButton = document.getElementById('toggleTrialWeightSectionButton'); 
+            let toggleButtonOriginalDisplay = '';
+            
+            if (toggleButton && window.getComputedStyle(toggleButton).display !== 'none') {
+                toggleButtonOriginalDisplay = toggleButton.style.display; 
+                if (suggestionContainerHidden) {
+                    toggleButton.style.display = 'none';
+                }
+            }
+            
+            window.print();
+            
+            if (toggleButton && toggleButtonOriginalDisplay !== '' && suggestionContainerHidden) {
+                 toggleButton.style.display = toggleButtonOriginalDisplay;
+            }
+        });
+
+        function getInputValue(elementId, placeholder = "N/A") {
+            const el = document.getElementById(elementId);
+            if (el && el.tagName === 'SELECT' && el.options[el.selectedIndex]) {
+                return el.options[el.selectedIndex].text ? el.options[el.selectedIndex].text : (el.value || placeholder);
+            }
+            return el && el.value ? el.value : placeholder;
+        }
+        function getSpanValue(elementId, placeholder = "---") {
+            const el = document.getElementById(elementId);
+            return el && el.textContent ? el.textContent : placeholder;
+        }
+
+        exportWordButton.addEventListener('click', () => {
+            const equipmentName = getInputValue('equipmentName');
+            const plantName = getInputValue('plantName');
+            const reportDate = getInputValue('reportDate');
+
+            let reportContent = `
+                <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+                <head><meta charset='utf-8'><title>Balancing Report</title>
+                <style>
+                    body { font-family: Arial, sans-serif; font-size: 10pt; margin: 20px; }
+                    h1, h2, h3 { color: #2c3e50; } 
+                    h1 { font-size: 18pt; text-align: center; margin-bottom: 5px;}
+                    h2 { font-size: 14pt; border-bottom: 1px solid #bdc3c7; padding-bottom: 3px; margin-top:20px; margin-bottom:10px;}
+                    h3 { font-size: 12pt; margin-top:15px; margin-bottom:8px; color: #34495e; }
+                    table { border-collapse: collapse; margin-bottom: 15px; width: 90%; margin-left:auto; margin-right:auto; }
+                    th, td { border: 1px solid #bdc3c7; padding: 6px; text-align: left; } 
+                    th { background-color: #ecf0f1; font-weight: bold; } 
+                    .section { margin-bottom: 25px; }
+                    .logo-container { text-align:center; margin-bottom:10px; }
+                    .logo { max-height:35px; margin: 0 10px; }
+                    .header-info { text-align: center; margin-bottom: 20px; }
+                    .header-info p { margin: 3px 0; font-size: 11pt; }
+                    .plot-image-container { text-align:center; margin-top:10px; }
+                    .plot-image { max-width: 450px; height: auto; border: 1px solid black; }
+                    .error-message { color: red; font-weight: bold; }
+                    .data-pair p { margin: 4px 0; }
+                    .data-pair strong { min-width: 200px; display: inline-block; }
+                </style>
+                </head>
+                <body>
+                    <div class='logo-container'>
+                        <img src="https://www.jklakshmicementsrm.com/jklcall/assets/img/CM.png?" alt="Left Logo" class="logo">
+                    </div>
+                    <h1>Enhanced Single Plane Balancing Report</h1>
+                    <div class='header-info'>
+                        <p><strong>Equipment Name:</strong> ${equipmentName}</p>
+                        <p><strong>Plant:</strong> ${plantName}</p>
+                        <p><strong>Date:</strong> ${reportDate}</p>
+                    </div>
+
+                    <div class='section'>
+                        <h2>Equipment Details</h2>
+                        <table>
+                            <tr><th>Parameter</th><th>Value</th></tr>
+                            <tr><td>Number of Vanes:</td><td>${getInputValue('numVanes')}</td></tr>
+                            <tr><td>Direction of Rotation:</td><td>${getInputValue('rotationDirection')}</td></tr>
+                            <tr><td>Rated Power (kW/HP):</td><td>${getInputValue('ratedPower', 'N/A')}</td></tr>
+                            <tr><td>Rotor RPM:</td><td>${getInputValue('rotorRPM', 'N/A')}</td></tr>
+                            <tr><td>Measurement Location:</td><td>${getInputValue('measurementLocation')}</td></tr>
+                            <tr><td>Rotor Type:</td><td>${getInputValue('rotorTypeSelect', 'N/A')}</td></tr>
+                        </table>
+                    </div>`;
+
+            if (!trialWeightSuggestionContainerDiv.classList.contains('hidden')) {
+                reportContent += `
+                    <div class='section'>
+                        <h3>Trial Weight Suggestion Details</h3>
+                        <table>
+                            <tr><td>Rotor Weight (kg):</td><td>${getInputValue('rotorWeight', 'N/A')}</td></tr>
+                            <tr><td>Trial Weight Radius (mm):</td><td>${getInputValue('trialRadius', 'N/A')}</td></tr>
+                            <tr><td>Suggested Trial Weight:</td><td>${getSpanValue('suggestedTrialWeightResult', 'Not calculated')}</td></tr>
+                        </table>
+                    </div>`;
+            }
+
+            const activeTabId = document.querySelector('.tab-button.active').id;
+            const currentMeasLocation = getSpanValue('plotLocationLabel'); 
+
+            const standardResultsVisible = (activeTabId === 'tabStandard' || activeTabId === 'tabKnownIC') && !resultsDisplayDiv.classList.contains('hidden');
+            const splittingResultsVisible = activeTabId === 'tabSplitting' && !splitResultsDisplayDiv.classList.contains('hidden');
+
+
+            if (standardResultsVisible) {
+                 if (activeTabId === 'tabStandard') {
+                    reportContent += `
+                        <div class='section'>
+                            <h2>Standard Balancing Results (for ${currentMeasLocation})</h2>
+                            <div class="data-pair">
+                                <p><strong>Original Run (O):</strong> Amp: ${getInputValue('originalAmp')} @ ${getInputValue('originalAngle')}°</p>
+                                <p><strong>Trial Weight (Wt):</strong> Mass: ${getInputValue('trialWeightMass')} @ ${getInputValue('trialWeightAngle')}°</p>
+                                <p><strong>Trial Run (O+T):</strong> Amp: ${getInputValue('trialRunAmp')} @ ${getInputValue('trialRunAngle')}°</p>
+                            </div>
+                            <h3>Calculated Results:</h3>
+                            <div class="data-pair">
+                                <p><strong>Influence Coefficient (IC):</strong> Magnitude: ${getSpanValue('icMagnitude')} , Angle: ${getSpanValue('icAngle')}°</p>
+                                <p><strong>Correction Weight (Wc):</strong> Required Mass: ${getSpanValue('correctionWeightMass')} , Placement Angle: ${getSpanValue('correctionWeightAngle')}°</p>
+                            </div>
+                        </div>`;
+                } else if (activeTabId === 'tabKnownIC') {
+                     reportContent += `
+                        <div class='section'>
+                            <h2>Correction with Known IC Results (for ${currentMeasLocation})</h2>
+                            <div class="data-pair">
+                                <p><strong>Original Run (O):</strong> Amp: ${getInputValue('originalAmpKnownIC')} @ ${getInputValue('originalAngleKnownIC')}°</p>
+                                <p><strong>Known Influence Coefficient (IC):</strong> Magnitude: ${getInputValue('knownICMag')} , Angle: ${getInputValue('knownICAngle')}°</p>
+                            </div>
+                            <h3>Calculated Results:</h3>
+                            <div class="data-pair">
+                                <p><strong>Correction Weight (Wc):</strong> Required Mass: ${getSpanValue('correctionWeightMass')} , Placement Angle: ${getSpanValue('correctionWeightAngle')}°</p>
+                            </div>
+                        </div>`;
+                }
+            }
+
+
+            if (splittingResultsVisible) {
+                reportContent += `
+                    <div class='section'>
+                        <h2>Splitting Correction Weight Results (for ${currentMeasLocation})</h2>
+                        <div class="data-pair">
+                            <p><strong>Original Correction Weight (Wc):</strong> Mass: ${getInputValue('splitWcMassInput')} @ ${getInputValue('splitWcAngleInput')}°</p>
+                            <p><strong>Splitting Parameters:</strong> Locations: ${getInputValue('splitNumHolesInput')}, First Angle: ${getInputValue('splitFirstHoleAngleInput')}°</p>
+                        </div>
+                        <h3>Calculated Split Weights:</h3>
+                        <div class="data-pair">
+                            <p><strong>Split Weight 1 (W1):</strong> Mass: ${getSpanValue('splitWeight1Mass')} @ ${getSpanValue('splitWeight1Angle')}°</p>
+                            <p><strong>Split Weight 2 (W2):</strong> Mass: ${getSpanValue('splitWeight2Mass')} @ ${getSpanValue('splitWeight2Angle')}°</p>
+                        </div>
+                    </div>`;
+            }
+             if (!splitErrorMessageP.classList.contains('hidden') && splitErrorMessageP.textContent) {
+                reportContent += `<div class='section'><p class="error-message">Splitting Error: ${splitErrorMessageP.textContent}</p></div>`;
+            }
+             if (!errorMessageDiv.classList.contains('hidden') && errorTextSpan.textContent) {
+                reportContent += `<div class='section'><p class="error-message">Calculation Error: ${errorTextSpan.textContent}</p></div>`;
+            }
+
+
+            if (canvas.getContext) {
+                try {
+                    const plotImageURL = canvas.toDataURL('image/png');
+                    reportContent += `
+                        <div class='section'>
+                            <h2>Polar Plot (for ${currentMeasLocation})</h2>
+                            <div class='plot-image-container'>
+                                <img src="${plotImageURL}" alt="Polar Plot" class="plot-image">
+                            </div>
+                        </div>`;
+                } catch (e) {
+                    console.error("Could not get polar plot image for Word export:", e);
+                    reportContent += `<div class='section'><p><em>Polar plot could not be exported. Ensure it is visible and calculated.</em></p></div>`;
+                }
+            }
+
+            reportContent += `</body></html>`;
+
+            const blob = new Blob(['\ufeff', reportContent], { type: 'application/msword;charset=utf-8' });
+            const fileName = `BalancingReport_${equipmentName.replace(/[^a-zA-Z0-9]/g, '_') || 'Export'}.doc`;
+
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = fileName;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(link.href);
+        });
+
+
+        saveDataButton.addEventListener('click', () => {
+            try {
+                const equipmentNameVal = equipmentNameInput.value.replace(/[^a-zA-Z0-9_]/g, '_') || 'equipment';
+                const reportDateVal = reportDateInput.value || 'unknown_date';
+                const fileName = `${equipmentNameVal}_${reportDateVal}_balancing_data.json`;
+
+                const dataToSave = {
+                    globalSettings: {
+                        numVanes: numVanesInput.value,
+                        rotationDirection: rotationDirectionInput.value,
+                        measurementLocation: measurementLocationSelect.value,
+                        equipmentName: equipmentNameInput.value,
+                        plantName: plantNameInput.value,
+                        reportDate: reportDateInput.value,
+                        ratedPower: ratedPowerInput.value,
+                        rotorRPM: rotorRPMInput.value, 
+                        rotorType: rotorTypeSelect.value 
+                    },
+                    balancingData: balancingData, 
+                    trialSuggestionInputs: { 
+                        rotorWeight: rotorWeightInput.value,
+                        trialRadius: trialRadiusInput.value
+                    },
+                    splittingInputs: { 
+                        wcMass: splitWcMassInput.value,
+                        wcAngle: splitWcAngleInput.value,
+                        numHoles: splitNumHolesInput.value,
+                        firstHoleAngle: splitFirstHoleAngleInput.value
+                    }
+                };
+                const dataStr = JSON.stringify(dataToSave, null, 2); 
+                const blob = new Blob([dataStr], {type: "application/json"});
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url; a.download = fileName;
+                document.body.appendChild(a); a.click();
+                document.body.removeChild(a); URL.revokeObjectURL(url);
+                console.log(`Data saved as ${fileName}`);
+            } catch (e) {
+                console.error("Error saving data:", e);
+                displayError("Could not save data. See console for details.");
+            }
+        });
+
+        loadDataButton.addEventListener('click', () => {
+            const input = document.createElement('input');
+            input.type = 'file'; input.accept = '.json';
+            input.onchange = e => {
+                const file = e.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = function(event) {
+                        try {
+                            const loadedFullData = JSON.parse(event.target.result);
+                            
+                            resetAllFields(); 
+
+                            if (loadedFullData.globalSettings) {
+                                numVanesInput.value = loadedFullData.globalSettings.numVanes || "12";
+                                measurementLocationSelect.value = loadedFullData.globalSettings.measurementLocation || "IBH";
+                                if (loadedFullData.globalSettings.rotationDirection === "CW") rotDirCWButton.click();
+                                else rotDirCCWButton.click();
+                                equipmentNameInput.value = loadedFullData.globalSettings.equipmentName || '';
+                                plantNameInput.value = loadedFullData.globalSettings.plantName || '';
+                                reportDateInput.value = loadedFullData.globalSettings.reportDate || new Date().toISOString().split('T')[0];
+                                ratedPowerInput.value = loadedFullData.globalSettings.ratedPower || '';
+                                rotorRPMInput.value = loadedFullData.globalSettings.rotorRPM || ''; 
+                                rotorTypeSelect.value = loadedFullData.globalSettings.rotorType || ''; 
+                                rotorTypeSelect.dispatchEvent(new Event('change')); 
+                            }
+
+                            if (loadedFullData.balancingData) {
+                                Object.keys(loadedFullData.balancingData).forEach(key => {
+                                    if (key === 'trialWeight') {
+                                        balancingData.trialWeight = {...balancingData.trialWeight, ...loadedFullData.balancingData.trialWeight};
+                                    } else if (locations.includes(key)) { 
+                                        balancingData[key] = {...balancingData[key], ...loadedFullData.balancingData[key]};
+                                    }
+                                });
+                            }
+
+
+                            if (loadedFullData.trialSuggestionInputs) {
+                                rotorWeightInput.value = loadedFullData.trialSuggestionInputs.rotorWeight || '';
+                                trialRadiusInput.value = loadedFullData.trialSuggestionInputs.trialRadius || '';
+                            }
+                            if (loadedFullData.splittingInputs) {
+                                splitWcMassInput.value = loadedFullData.splittingInputs.wcMass || '';
+                                splitWcAngleInput.value = loadedFullData.splittingInputs.wcAngle || '';
+                                splitNumHolesInput.value = loadedFullData.splittingInputs.numHoles || numVanesInput.value || '12';
+                                splitFirstHoleAngleInput.value = loadedFullData.splittingInputs.firstHoleAngle || '0';
+                            }
+
+
+                            updateLocationSpecificFields(measurementLocationSelect.value);
+                            updateGlobalTrialWeightFields();
+                            resultsDisplayDiv.classList.add('hidden'); 
+                            splitResultsDisplayDiv.classList.add('hidden');
+                            errorMessageDiv.classList.add('hidden');
+                            drawPolarPlotBasedOnMode();
+                            console.log("Data loaded successfully.");
+
+                        } catch (err) {
+                            console.error("Error loading or parsing file:", err);
+                            displayError("Invalid data file or format.");
+                        }
+                    };
+                    reader.readAsText(file);
+                }
+            };
+            input.click();
+        });
+
+        resetFormButton.addEventListener('click', () => {
+            if (confirm("Are you sure you want to reset all fields and data?")) {
+                resetAllFields();
+            }
+        });
+
+
+        // --- Initialization ---
+        initializeData(); 
+        updateLocationSpecificFields(measurementLocationSelect.value); 
+        updateGlobalTrialWeightFields();
+        drawPolarPlotBasedOnMode(); 
+        
+
+        window.addEventListener('resize', () => {
+             drawPolarPlotBasedOnMode();
+        });
+
+    </script>
+</body>
+</html>
