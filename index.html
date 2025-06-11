@@ -184,8 +184,8 @@
                     <label for="rotorTypeSelect" class="font-medium text-sky-700">Rotor Type:</label>
                     <div class="mt-1 flex flex-col items-center"> <select id="rotorTypeSelect" class="w-full md:w-auto md:min-w-[180px] focus:ring-sky-500 focus:border-sky-500">
                             <option value="">Select Type</option>
-                            <option value="Overhang">Overhung</option>
-                            <option value="Center-hung">Center-hung</option>
+                            <option value="Overhung">Overhung</option>
+                            <option value="Centerhung">Centerhung</option>
                         </select>
                         <img id="rotorTypeImage" src="" alt="Rotor Type Image" class="hidden mt-2 h-20 md:h-24 w-auto object-contain"> 
                     </div>
@@ -232,7 +232,7 @@
                     <h3 class="text-lg font-medium mt-4 mb-2 text-gray-700">Original Run (O)</h3>
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div class="input-group">
-                            <label for="originalAmp">Amplitude (units):</label>
+                            <label for="originalAmp">Amplitude (mm/s):</label>
                             <input type="number" id="originalAmp" step="any" placeholder="e.g., 5.0" class="focus:ring-blue-500 focus:border-blue-500">
                         </div>
                         <div class="input-group">
@@ -244,7 +244,7 @@
                     <h3 class="text-lg font-medium mt-4 mb-2 text-gray-700">Trial Weight (Wt) - Common for all locations</h3>
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div class="input-group">
-                            <label for="trialWeightMass">Mass (units):</label>
+                            <label for="trialWeightMass">Mass (grams):</label>
                             <input type="number" id="trialWeightMass" step="any" placeholder="e.g., 10.0" class="focus:ring-blue-500 focus:border-blue-500">
                         </div>
                         <div class="input-group">
@@ -256,7 +256,7 @@
                     <h3 class="text-lg font-medium mt-4 mb-2 text-gray-700">Trial Run (O+T) - For selected location</h3>
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div class="input-group">
-                            <label for="trialRunAmp">Amplitude (units):</label>
+                            <label for="trialRunAmp">Amplitude (mm/s):</label>
                             <input type="number" id="trialRunAmp" step="any" placeholder="e.g., 3.0" class="focus:ring-blue-500 focus:border-blue-500">
                         </div>
                         <div class="input-group">
@@ -276,7 +276,7 @@
                     <h3 class="text-lg font-medium mt-4 mb-2 text-gray-700">Original Run (O)</h3>
                      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div class="input-group">
-                            <label for="originalAmpKnownIC">Amplitude (units):</label>
+                            <label for="originalAmpKnownIC">Amplitude (mm/s):</label>
                             <input type="number" id="originalAmpKnownIC" step="any" placeholder="e.g., 5.0" class="focus:ring-purple-500 focus:border-purple-500">
                         </div>
                         <div class="input-group">
@@ -288,7 +288,7 @@
                     <h3 class="text-lg font-medium mt-4 mb-2 text-gray-700">Known Influence Coefficient (IC)</h3>
                      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div class="input-group">
-                            <label for="knownICMag">IC Magnitude (units/mass):</label>
+                            <label for="knownICMag">IC Magnitude (mm/s/gram):</label>
                             <input type="number" id="knownICMag" step="any" placeholder="e.g., 0.5" class="focus:ring-purple-500 focus:border-purple-500">
                         </div>
                         <div class="input-group">
@@ -307,7 +307,7 @@
                     <h3 class="text-lg font-medium mt-4 mb-2 text-gray-700">Original Correction Weight (Wc)</h3>
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div class="input-group">
-                            <label for="splitWcMassInput">Mass (units):</label>
+                            <label for="splitWcMassInput">Mass (gram):</label>
                             <input type="number" id="splitWcMassInput" step="any" placeholder="From calc" class="focus:ring-teal-500 focus:border-teal-500">
                         </div>
                         <div class="input-group">
@@ -448,7 +448,7 @@
 
         const rotorTypeImageSources = {
             "Overhung": "https://i.ibb.co/r2gmqVyX/download.png",
-            "Center-hung": "https://i.ibb.co/Q7n6wPnp/download-1.png"
+            "Centerhung": "https://i.ibb.co/Q7n6wPnp/download-1.png"
         };
 
 
