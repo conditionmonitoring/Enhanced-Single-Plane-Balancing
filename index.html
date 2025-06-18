@@ -242,6 +242,10 @@
                     </div>
 
                     <h3 class="text-lg font-medium mt-4 mb-2 text-gray-700">Trial Weight (Wt) - Common for all locations</h3>
+                    <div class="flex items-center mt-1 mb-2">
+                        <input type="checkbox" id="trialWeightRemovedCheckbox" class="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
+                        <label for="trialWeightRemovedCheckbox" class="ml-2 block text-sm text-gray-900 font-medium">Trial weight was removed</label>
+                    </div>
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div class="input-group">
                             <label for="trialWeightMass">Mass (grams):</label>
@@ -262,6 +266,22 @@
                         <div class="input-group">
                             <label for="trialRunAngle">Angle (&deg; CCW from Ref):</label>
                             <input type="number" id="trialRunAngle" step="any" placeholder="e.g., 120" class="focus:ring-blue-500 focus:border-blue-500">
+                        </div>
+                    </div>
+
+                    <h3 class="text-lg font-medium mt-6 mb-2 text-gray-700">Correction Strategy</h3>
+                    <div class="mt-2 space-y-2">
+                        <div class="flex items-center">
+                            <input id="strategyRemove" name="correctionStrategy" type="radio" value="remove" checked class="h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500">
+                            <label for="strategyRemove" class="ml-3 block text-sm font-medium text-gray-700">
+                                Remove trial weight (Calculate total Wc)
+                            </label>
+                        </div>
+                        <div class="flex items-center">
+                            <input id="strategyKeep" name="correctionStrategy" type="radio" value="keep" class="h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500">
+                            <label for="strategyKeep" class="ml-3 block text-sm font-medium text-gray-700">
+                                Keep trial weight (Calculate additional Wc)
+                            </label>
                         </div>
                     </div>
                     <button id="calculateStandardButton" class="mt-6 w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg transition duration-150 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50">
@@ -346,7 +366,8 @@
                         <p>This Enhanced Single Plane Balancing Calculator (Vector Method) is designed to assist maintenance professionals and engineers in performing single-plane balancing of rotating machinery.</p>
                         <p>Key features include:</p>
                         <ul class="list-disc list-inside ml-4">
-                            <li>Calculation of correction weights using the standard trial weight method.</li>
+                            <li>Standard trial weight method with options for adding/removing trial weights.</li>
+                            <li>Choice to calculate total correction or additional (trim) correction weights.</li>
                             <li>Option to use a known Influence Coefficient (IC) for direct correction.</li>
                             <li>Suggestion for an appropriate trial weight based on rotor parameters.</li>
                             <li>Calculation for splitting a single correction weight into two weights at available locations.</li>
@@ -374,7 +395,7 @@
                         <li>Balancing Sensitivity:<strong>1/H</strong></li>
                         </ul>
                         <p><strong>Disclaimer:</strong> This calculator provides theoretical calculations based on the inputs provided. Always follow established safety procedures and use calibrated vibration analysis equipment. The results should be verified by experienced personnel.</p>
-                        <p class="text-sm mt-4">Version: 10</p> <p class="text-sm">Developed by Sourav Biswal for illustrative and educational purposes.</p>
+                        <p class="text-sm mt-4">Version: 10.4 (handles trim balance)</p> <p class="text-sm">Developed by Sourav Biswal for illustrative and educational purposes.</p>
                     </div>
                 </div>
                 
@@ -385,8 +406,8 @@
                         <p class="ml-4">Magnitude(mm/s/gram): <span id="icMagnitude" class="font-mono">---</span></p>
                         <p class="ml-4">Angle (lag):<span id="icAngle" class="font-mono">---</span> &deg;</p>
                     </div>
-                    <div class="results-group mt-4">
-                        <p><strong>Correction Weight (Wc):</strong></p>
+                    <div id="correctionWeightResults" class="results-group mt-4">
+                        <p><strong id="correctionWeightLabel">Correction Weight (Wc):</strong></p>
                         <p class="ml-4">Required Mass(grams): <span id="correctionWeightMass" class="font-mono">---</span></p>
                         <p class="ml-4">Placement Angle (CCW from Ref): <span id="correctionWeightAngle" class="font-mono">---</span> &deg;</p>
                     </div>
@@ -502,6 +523,8 @@
             splitErrorMessageP.classList.add('hidden');
             splitErrorMessageP.textContent = '';
             splitWeightResults = { w1: null, w2: null };
+            document.getElementById('trialWeightRemovedCheckbox').checked = false;
+            document.getElementById('strategyRemove').checked = true;
         }
         
 
@@ -558,6 +581,7 @@
         const icResultsDiv = document.getElementById('icResults');
         const icMagnitudeSpan = document.getElementById('icMagnitude');
         const icAngleSpan = document.getElementById('icAngle');
+        const correctionWeightLabel = document.getElementById('correctionWeightLabel');
         const correctionWeightMassSpan = document.getElementById('correctionWeightMass');
         const correctionWeightAngleSpan = document.getElementById('correctionWeightAngle');
         const errorMessageDiv = document.getElementById('errorMessage');
@@ -836,9 +860,16 @@
             const O_amp = parseFloat(originalAmpInput.value);
             const O_ang = parseFloat(originalAngleInput.value);
             const Wt_mass = parseFloat(trialWeightMassInput.value);
-            const Wt_ang = parseFloat(trialWeightAngleInput.value);
             const OT_amp = parseFloat(trialRunAmpInput.value);
             const OT_ang = parseFloat(trialRunAngleInput.value);
+
+            let Wt_ang = parseFloat(trialWeightAngleInput.value);
+            const isTrialWeightRemoved = document.getElementById('trialWeightRemovedCheckbox').checked;
+            const correctionStrategy = document.querySelector('input[name="correctionStrategy"]:checked').value;
+
+            if (isTrialWeightRemoved) {
+                Wt_ang = normalizeAngle(Wt_ang + 180);
+            }
 
             if ([O_amp, O_ang, Wt_mass, Wt_ang, OT_amp, OT_ang].some(isNaN)) {
                 displayError("Standard Balancing: All input fields must be valid numbers.");
@@ -865,7 +896,6 @@
             balancingData[currentLocation].trialRunAmp = OT_amp; 
             balancingData[currentLocation].trialRunAngle = OT_ang;
 
-
             icMagnitudeSpan.textContent = (isFinite(icMag)) ? icMag.toFixed(3) : "N/A (Wt mass zero)";
             icAngleSpan.textContent = (isFinite(icMag)) ? icAng.toFixed(1) : "N/A";
             icResultsDiv.classList.remove('hidden');
@@ -874,12 +904,23 @@
             if (!isFinite(icMag) || icMag < 1e-9) { 
                 corrMass = "N/A";
                 corrAngle = "N/A";
-                 balancingData[currentLocation].correctionMass = null;
-                 balancingData[currentLocation].correctionAngle = null;
+                balancingData[currentLocation].correctionMass = null;
+                balancingData[currentLocation].correctionAngle = null;
                 if (O_amp > 1e-9) displayError("IC magnitude is near zero or invalid. Cannot calculate correction weight accurately.");
             } else {
-                corrMass = O_vec.magnitude / icMag;
-                corrAngle = normalizeAngle(normalizeAngle(O_vec.angleDeg + 180) - icAng);
+                let targetVibrationVector;
+                if (correctionStrategy === 'keep') {
+                    // We want to counteract the O+T vector
+                    targetVibrationVector = OT_vec;
+                    correctionWeightLabel.textContent = "Additional Correction Weight (Wc):";
+                } else {
+                    // We want to counteract the O vector
+                    targetVibrationVector = O_vec;
+                    correctionWeightLabel.textContent = "Total Correction Weight (Wc):";
+                }
+
+                corrMass = targetVibrationVector.magnitude / icMag;
+                corrAngle = normalizeAngle(normalizeAngle(targetVibrationVector.angleDeg + 180) - icAng);
                 balancingData[currentLocation].correctionMass = corrMass;
                 balancingData[currentLocation].correctionAngle = corrAngle;
             }
@@ -889,9 +930,11 @@
             
             resultsDisplayDiv.classList.remove('hidden');
             prefillSplittingInputs();
-            drawPolarPlot(O_vec, OT_vec, T_eff_vec, 
-                          (typeof corrAngle === 'number' && typeof corrMass === 'number') ? new Vector(corrMass, corrAngle) : null, 
-                          null, null, null);
+            
+            const plot_Wc_vec = (typeof corrAngle === 'number' && typeof corrMass === 'number') ? new Vector(corrMass, corrAngle) : null;
+            const plot_Target_vec = (correctionStrategy === 'keep') ? new Vector(OT_vec.magnitude, normalizeAngle(OT_vec.angleDeg + 180)) : new Vector(O_vec.magnitude, normalizeAngle(O_vec.angleDeg + 180));
+            
+            drawPolarPlot(O_vec, OT_vec, T_eff_vec, plot_Wc_vec, plot_Target_vec, null, null);
         });
 
         calculateKnownICButton.addEventListener('click', () => {
@@ -929,7 +972,8 @@
             balancingData[currentLocation].correctionAngle = corrAngle;
             balancingData[currentLocation].knownICMag = known_IC_mag; 
             balancingData[currentLocation].knownICAngle = known_IC_ang;
-
+            
+            correctionWeightLabel.textContent = "Correction Weight (Wc):";
             icResultsDiv.classList.add('hidden'); 
             correctionWeightMassSpan.textContent = corrMass.toFixed(3);
             correctionWeightAngleSpan.textContent = corrAngle.toFixed(1);
@@ -1077,6 +1121,12 @@
                 }
                 if (data.correctionMass !== null && data.correctionAngle !== null && isFinite(data.correctionMass)) {
                     Wc_vec_plot = new Vector(data.correctionMass, data.correctionAngle); 
+                    const correctionStrategy = document.querySelector('input[name="correctionStrategy"]:checked').value;
+                     if(correctionStrategy === 'keep' && OT_vec){
+                        Minus_O_vec_plot = new Vector(OT_vec.magnitude, normalizeAngle(OT_vec.angleDeg + 180));
+                     } else if (O_vec) {
+                        Minus_O_vec_plot = new Vector(O_vec.magnitude, normalizeAngle(O_vec.angleDeg + 180));
+                     }
                 }
             } else if (currentModeTab === 'tabKnownIC') {
                  if (O_vec && data.correctionMass !== null && data.correctionAngle !== null && isFinite(data.correctionMass)) {
@@ -1120,7 +1170,6 @@
             const centerY = canvas.height / 2;
             const plotRadius = Math.min(centerX, centerY) * 0.80;
 
-            // --- SCALING LOGIC UPDATED ---
             let scaleDeterminingAmplitude = 10.0; 
             const vibrationAmps = [];
             if (O_vec && O_vec.magnitude > 1e-9) vibrationAmps.push(O_vec.magnitude);
@@ -1140,7 +1189,6 @@
                 }
             }
             const scale = plotRadius / scaleDeterminingAmplitude;
-            // --- END SCALING LOGIC UPDATE ---
 
 
             ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -1195,28 +1243,61 @@
             ctx.beginPath(); ctx.arc(centerX + tachoOuterRadius + (canvasWidth > 300 ? 3 : 2), centerY, (canvasWidth > 300 ? 3 : 2), 0, 2 * Math.PI);
             ctx.fillStyle = "#059669"; ctx.fill();
 
+            // --- Draw Vibration and Response Vectors ---
             let o_vec_canvas_endX = null; let o_vec_canvas_endY = null;
             if (O_vec && O_vec.magnitude > 1e-9) {
                 let o_plotAngleRad = O_vec.angleRad;
                 if (rotationDir === "CCW" && O_vec.angleDeg !== 0) { o_plotAngleRad = toRadians(normalizeAngle(360 - O_vec.angleDeg)); }
                 o_vec_canvas_endX = centerX + O_vec.magnitude * Math.cos(o_plotAngleRad) * scale;
                 o_vec_canvas_endY = centerY - O_vec.magnitude * Math.sin(o_plotAngleRad) * scale;
-                drawSingleVector(O_vec, "blue", "O", centerX, centerY, scale, canvasWidth, undefined, undefined);
+                drawSingleVector(O_vec, "blue", "O", centerX, centerY, scale, canvasWidth);
             }
-            if (OT_vec && OT_vec.magnitude > 1e-9) { drawSingleVector(OT_vec, "red", "O+T", centerX, centerY, scale, canvasWidth, undefined, undefined); }
+            if (OT_vec && OT_vec.magnitude > 1e-9) { drawSingleVector(OT_vec, "red", "O+T", centerX, centerY, scale, canvasWidth); }
             if (T_eff_vec && T_eff_vec.magnitude > 1e-9) {
                  if (o_vec_canvas_endX !== null && o_vec_canvas_endY !== null) {
                     drawSingleVector(T_eff_vec, "green", "T_eff", centerX, centerY, scale, canvasWidth, o_vec_canvas_endX, o_vec_canvas_endY);
                 } else { 
-                    drawSingleVector(T_eff_vec, "green", "T_eff", centerX, centerY, scale, canvasWidth, undefined, undefined);
+                    drawSingleVector(T_eff_vec, "green", "T_eff", centerX, centerY, scale, canvasWidth);
                 }
             }
-            if (Wc_vec_plot && Wc_vec_plot.magnitude > 1e-9) { drawSingleVector(Wc_vec_plot, "orange", "Wc", centerX, centerY, scale, canvasWidth, undefined, undefined); }
-            if (Minus_O_vec_plot && Minus_O_vec_plot.magnitude > 1e-9) { drawSingleVector(Minus_O_vec_plot, "purple", "-O", centerX, centerY, scale, canvasWidth, undefined, undefined); }
-            if (Ws1_vec && Ws1_vec.magnitude > 1e-9) { drawSingleVector(Ws1_vec, "#FFC107", "W_s1", centerX, centerY, scale, canvasWidth, undefined, undefined); }
-            if (Ws2_vec && Ws2_vec.magnitude > 1e-9) { drawSingleVector(Ws2_vec, "#795548", "W_s2", centerX, centerY, scale, canvasWidth, undefined, undefined); }
+             
+            if (Minus_O_vec_plot && Minus_O_vec_plot.magnitude > 1e-9) { 
+                const correctionStrategy = document.querySelector('input[name="correctionStrategy"]:checked')?.value;
+                const label = (correctionStrategy === 'keep' && tabStandardButton.classList.contains('active')) ? '-(O+T)' : '-O';
+                drawSingleVector(Minus_O_vec_plot, "purple", label, centerX, centerY, scale, canvasWidth); 
+            }
+            
+            // --- Draw Weight Vectors with CAPPING LOGIC ---
+            if (Wc_vec_plot && Wc_vec_plot.magnitude > 1e-9) {
+                const label = correctionWeightLabel.textContent.includes("Additional") ? "Wc_add" : "Wc";
+                if (Wc_vec_plot.magnitude > scaleDeterminingAmplitude) {
+                    const capped_Wc_vec = new Vector(scaleDeterminingAmplitude, Wc_vec_plot.angleDeg);
+                    const originalLabel = `${label}: ${Wc_vec_plot.magnitude.toFixed(2)} @ ${Wc_vec_plot.angleDeg.toFixed(1)}\u00B0`;
+                    drawSingleVector(capped_Wc_vec, "orange", label, centerX, centerY, scale, canvasWidth, undefined, undefined, originalLabel);
+                } else {
+                    drawSingleVector(Wc_vec_plot, "orange", label, centerX, centerY, scale, canvasWidth);
+                }
+            }
+            if (Ws1_vec && Ws1_vec.magnitude > 1e-9) {
+                if (Ws1_vec.magnitude > scaleDeterminingAmplitude) {
+                    const capped_Ws1_vec = new Vector(scaleDeterminingAmplitude, Ws1_vec.angleDeg);
+                    const originalLabel = `W_s1: ${Ws1_vec.magnitude.toFixed(2)} @ ${Ws1_vec.angleDeg.toFixed(1)}\u00B0`;
+                    drawSingleVector(capped_Ws1_vec, "#FFC107", "W_s1", centerX, centerY, scale, canvasWidth, undefined, undefined, originalLabel);
+                } else {
+                    drawSingleVector(Ws1_vec, "#FFC107", "W_s1", centerX, centerY, scale, canvasWidth);
+                }
+            }
+            if (Ws2_vec && Ws2_vec.magnitude > 1e-9) {
+                if (Ws2_vec.magnitude > scaleDeterminingAmplitude) {
+                    const capped_Ws2_vec = new Vector(scaleDeterminingAmplitude, Ws2_vec.angleDeg);
+                    const originalLabel = `W_s2: ${Ws2_vec.magnitude.toFixed(2)} @ ${Ws2_vec.angleDeg.toFixed(1)}\u00B0`;
+                    drawSingleVector(capped_Ws2_vec, "#795548", "W_s2", centerX, centerY, scale, canvasWidth, undefined, undefined, originalLabel);
+                } else {
+                    drawSingleVector(Ws2_vec, "#795548", "W_s2", centerX, centerY, scale, canvasWidth);
+                }
+            }
 
-            // --- HS and hS MARKERS UPDATED ---
+            // --- HS and hS MARKERS ---
             if (O_vec && O_vec.magnitude > 1e-9) {
                 const highSpotAngleDeg_CCW = O_vec.angleDeg; 
                 let icAngleForSpots = null;
@@ -1243,10 +1324,10 @@
                 const hsY = centerY - markerOuterRadius * Math.sin(hsPlotAngleRad_display); 
                 
                 ctx.beginPath(); ctx.arc(hsX, hsY, markerDotRadius, 0, 2 * Math.PI); 
-                ctx.fillStyle = "red"; // HS color
+                ctx.fillStyle = "red";
                 ctx.fill();
                 ctx.font = `bold ${Math.max(9, canvasWidth / 45)}px Arial`;
-                ctx.fillStyle = "red"; // HS text color
+                ctx.fillStyle = "red";
                 ctx.textAlign = (Math.cos(hsPlotAngleRad_display) < -0.1) ? "right" : "left";
                 ctx.textBaseline = "middle";
                 ctx.fillText("HS", hsX + (Math.cos(hsPlotAngleRad_display) * labelOffset), hsY - (Math.sin(hsPlotAngleRad_display) * labelOffset) +1 );
@@ -1261,10 +1342,10 @@
                     const heavySX = centerX + markerOuterRadius * Math.cos(heavySpotPlotAngleRad_display);
                     const heavySY = centerY - markerOuterRadius * Math.sin(heavySpotPlotAngleRad_display);
                     ctx.beginPath(); ctx.arc(heavySX, heavySY, markerDotRadius, 0, 2 * Math.PI); 
-                    ctx.fillStyle = "darkblue"; // hS color
+                    ctx.fillStyle = "darkblue";
                     ctx.fill();
                     ctx.font = `bold ${Math.max(9, canvasWidth / 45)}px Arial`; 
-                    ctx.fillStyle = "darkblue"; // hS text color
+                    ctx.fillStyle = "darkblue";
                     ctx.textAlign = (Math.cos(heavySpotPlotAngleRad_display) < -0.1) ? "right" : "left";
                     ctx.textBaseline = "middle";
                     ctx.fillText("hS", heavySX + (Math.cos(heavySpotPlotAngleRad_display) * labelOffset), heavySY - (Math.sin(heavySpotPlotAngleRad_display) * labelOffset) + 1); 
@@ -1272,8 +1353,8 @@
             }
         }
 
-        // UPDATED drawSingleVector function
-        function drawSingleVector(vector, color, label, plotCenterX, plotCenterY, scaleFactor, canvasWidth, customStartX, customStartY) {
+        // UPDATED drawSingleVector function to handle capping label
+        function drawSingleVector(vector, color, label, plotCenterX, plotCenterY, scaleFactor, canvasWidth, customStartX, customStartY, overrideLabel) {
             if (!vector || vector.magnitude < 1e-9) return;
 
             let plotAngleRad = vector.angleRad; 
@@ -1318,7 +1399,14 @@
             ctx.fillStyle = color; 
             ctx.textAlign = "left";
             ctx.textBaseline = "bottom";
-            let labelText = `${label}: ${vector.magnitude.toFixed(vector.magnitude > 10 ? 1 : 2)} @ ${vector.angleDeg.toFixed(0)}\u00B0`;
+
+            let labelText;
+            if (overrideLabel) {
+                labelText = overrideLabel;
+            } else {
+                // Standardized label format
+                labelText = `${label}: ${vector.magnitude.toFixed(2)} @ ${vector.angleDeg.toFixed(1)}\u00B0`;
+            }
             
             let textX = endX + 5; 
             let textY = endY - 5;
@@ -1440,6 +1528,8 @@
 
             const activeTabId = document.querySelector('.tab-button.active').id;
             const currentMeasLocation = getSpanValue('plotLocationLabel'); 
+            const trialWeightRemoved = document.getElementById('trialWeightRemovedCheckbox').checked;
+            const correctionStrategy = document.querySelector('input[name="correctionStrategy"]:checked').value;
 
             const standardResultsVisible = (activeTabId === 'tabStandard' || activeTabId === 'tabKnownIC') && !resultsDisplayDiv.classList.contains('hidden');
             const splittingResultsVisible = activeTabId === 'tabSplitting' && !splitResultsDisplayDiv.classList.contains('hidden');
@@ -1452,13 +1542,14 @@
                             <h2>Standard Balancing Results (for ${currentMeasLocation})</h2>
                             <div class="data-pair">
                                 <p><strong>Original Run (O):</strong> Amp: ${getInputValue('originalAmp')} @ ${getInputValue('originalAngle')}°</p>
-                                <p><strong>Trial Weight (Wt):</strong> Mass: ${getInputValue('trialWeightMass')} @ ${getInputValue('trialWeightAngle')}°</p>
+                                <p><strong>Trial Weight (Wt):</strong> Mass: ${getInputValue('trialWeightMass')} @ ${getInputValue('trialWeightAngle')}° ${trialWeightRemoved ? '(Removed)' : '(Added)'}</p>
                                 <p><strong>Trial Run (O+T):</strong> Amp: ${getInputValue('trialRunAmp')} @ ${getInputValue('trialRunAngle')}°</p>
+                                <p><strong>Correction Strategy:</strong> ${correctionStrategy === 'keep' ? 'Keep trial weight' : 'Remove trial weight'}</p>
                             </div>
                             <h3>Calculated Results:</h3>
                             <div class="data-pair">
                                 <p><strong>Influence Coefficient (IC):</strong> Magnitude: ${getSpanValue('icMagnitude')} , Angle: ${getSpanValue('icAngle')}°</p>
-                                <p><strong>Correction Weight (Wc):</strong> Required Mass: ${getSpanValue('correctionWeightMass')} , Placement Angle: ${getSpanValue('correctionWeightAngle')}°</p>
+                                <p><strong>${getSpanValue('correctionWeightLabel','Correction Weight (Wc):')}</strong> Mass: ${getSpanValue('correctionWeightMass')} , Placement Angle: ${getSpanValue('correctionWeightAngle')}°</p>
                             </div>
                         </div>`;
                 } else if (activeTabId === 'tabKnownIC') {
